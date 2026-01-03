@@ -29,8 +29,8 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-
 INSTALLED_APPS = [
+    'jazzmin',                  # ✅ Jazzmin admin theme
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -39,9 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'trips',
-
 ]
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -118,3 +116,22 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+JAZZMIN_SETTINGS = {
+    "site_title": "Trip Admin",
+    "site_header": "Trip Management",
+    "site_brand": "Trip Admin",
+    "welcome_sign": "Welcome to Trip Admin Panel",
+    "copyright": "Bathila © 2026",
+
+    # 🎨 UI options
+    "show_ui_builder": True,   # Enables live theme tweaking in admin
+}
+JAZZMIN_UI_TWEAKS = {
+    "theme": "dark",                # Dark mode
+    "navbar": "navbar-dark bg-primary",  # Dark navbar with blue accent
+    "sidebar": "sidebar-dark-primary",   # Dark sidebar
+    "footer": "footer-dark",             # Dark footer
+    "brand_colour": "navbar-primary",    # Brand color matches navbar
+    "body_small_text": True,             # Slightly smaller text for compact look
+}
