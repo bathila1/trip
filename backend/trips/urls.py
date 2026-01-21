@@ -1,7 +1,7 @@
 from rest_framework.routers import DefaultRouter
-from .views import TripViewSet
+from .views import DestinationViewSet
 
 router = DefaultRouter()
-router.register(r'trips', TripViewSet, basename='trip')
+router.register(r'destinations', DestinationViewSet)
 
 urlpatterns = router.urls

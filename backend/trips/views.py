@@ -5,3 +5,10 @@ from .serializers import TripSerializer
 class TripViewSet(viewsets.ModelViewSet):
     queryset = Trip.objects.all().order_by('start_date')
     serializer_class = TripSerializer
+
+from .models import Destination
+from .serializers import DestinationSerializer
+
+class DestinationViewSet(viewsets.ModelViewSet):
+    queryset = Destination.objects.all()
+    serializer_class = DestinationSerializer

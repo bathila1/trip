@@ -6,3 +6,11 @@ class TripAdmin(admin.ModelAdmin):
     list_display = ('name', 'destination', 'start_date', 'end_date')
     search_fields = ('name', 'destination')
     list_filter = ('destination', 'start_date')
+
+from .models import Destination
+
+@admin.register(Destination)
+class DestinationAdmin(admin.ModelAdmin):
+    list_display = ("name", "category", "latitude", "longitude", "image_url")
+    search_fields = ("name", "category")
+    list_filter = ("category",)
