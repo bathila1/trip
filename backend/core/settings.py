@@ -6,21 +6,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
-
+from decouple import config
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-m*e(%5yk@i32g3orfeqeedmrfmm)q-r+l84h0l@7ppw8ee2c)l'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True   
 
 CSRF_TRUSTED_ORIGINS = [
     "https://nonsocialistic-blanca-cleverishly.ngrok-free.dev",
+    "https://*.trycloudflare.com",
 ]
 
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
     "nonsocialistic-blanca-cleverishly.ngrok-free.dev",
+    ".trycloudflare.com",
+    
 ]
 
 
@@ -44,6 +47,13 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     )
 }
+
+from datetime import timedelta
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -133,7 +143,10 @@ JAZZMIN_SETTINGS = {
     "show_ui_builder": True,   # Enables live theme tweaking in admin
 }
 JAZZMIN_UI_TWEAKS = {
-    "theme": "dark",                # Dark mode
+    # "theme": "litera",                # Dark mode
+    "theme": "lumen",                # Dark mode
+    # "theme": "lux",                # Dark mode
+    # "theme": "sketchy",                # Dark mode
     "navbar": "navbar-dark bg-primary",  # Dark navbar with blue accent
     "sidebar": "sidebar-dark-primary",   # Dark sidebar
     "footer": "footer-dark",             # Dark footer

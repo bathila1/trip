@@ -1,40 +1,70 @@
 # Create your views here.
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
 from .models import UserProfile
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .serializers import UserProfileSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 @api_view(["POST"])
 def register(request):
-    username = request.data.get("username")
+    email = request.data.get("email")
+    password = request.data.get("password")
+    full_name = request.data.get("fullName", "")  # ✅ capture full name
+
+    if not email or not password:
+        return Response({"error": "Email and password required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if User.objects.filter(username=email).exists():
+        return Response({"error": "Email already registered"}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = User.objects.create_user(username=email, email=email, password=password)
+    UserProfile.objects.create(user=user, full_name=full_name)
+
+    refresh = RefreshToken.for_user(user)
+    access = str(refresh.access_token)
+
+    return Response({
+        "accessToken": access,
+        "refreshToken": str(refresh),
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "fullName": full_name,
+        }
+    }, status=status.HTTP_201_CREATED)
+
+@api_view(["POST"])
+def login(request):
+    email = request.data.get("email")
     password = request.data.get("password")
 
-    # ✅ Basic validation
-    if not username or not password:
-        return Response({"error": "Username and password required"}, status=status.HTTP_400_BAD_REQUEST)
+    if not email or not password:
+        return Response({"error": "Email and password required"}, status=status.HTTP_400_BAD_REQUEST)
 
-    if User.objects.filter(username=username).exists():
-        return Response({"error": "Username already taken"}, status=status.HTTP_400_BAD_REQUEST)
+    # ✅ Authenticate using email as username
+    user = authenticate(username=email, password=password)
 
-    # ✅ Create user
-    user = User.objects.create_user(username=username, password=password)
-    UserProfile.objects.create(user=user)
-    
-    return Response({"message": "User registered successfully!"}, status=status.HTTP_201_CREATED)
+    if user is None:
+        return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])   # ✅ only logged-in users can access
-def profile(request):
-    user = request.user
+    # ✅ Generate JWT tokens
+    refresh = RefreshToken.for_user(user)
+    access = str(refresh.access_token)
+
     return Response({
-        "id": user.id,
-        "username": user.username,
-        "email": user.email,
-        # add more fields if needed
-    })
+        "accessToken": access,
+        "refreshToken": str(refresh),
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            # "fullName": user.full_name,
+        }
+    }, status=status.HTTP_200_OK)
 
 
 @api_view(["GET", "PUT"])
@@ -51,4 +81,4 @@ def profile(request):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-        return Response(serializer.errors, status=400)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
