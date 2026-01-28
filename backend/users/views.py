@@ -1,84 +1,92 @@
-# Create your views here.
+from rest_framework import generics, permissions, status
+from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
-from .models import UserProfile
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from .serializers import UserProfileSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import UserSerializer, UserProfileSerializer
+from .models import UserProfile
+from rest_framework.views import APIView
 
 
-@api_view(["POST"])
-def register(request):
-    email = request.data.get("email")
-    password = request.data.get("password")
-    full_name = request.data.get("fullName", "")  # ✅ capture full name
+class RegisterView(generics.GenericAPIView):
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = UserSerializer
 
-    if not email or not password:
-        return Response({"error": "Email and password required"}, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, *args, **kwargs):
+        email = request.data.get("email")
+        password = request.data.get("password")
+        full_name = request.data.get("fullName")
 
-    if User.objects.filter(username=email).exists():
-        return Response({"error": "Email already registered"}, status=status.HTTP_400_BAD_REQUEST)
+        if not email or not password:
+            return Response({"error": "Email and password are required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if User.objects.filter(email=email).exists():
+            return Response({"error": "Email already registered"}, status=status.HTTP_400_BAD_REQUEST)
 
-    user = User.objects.create_user(username=email, email=email, password=password)
-    UserProfile.objects.create(user=user, full_name=full_name)
+        user = User.objects.create_user(username=email, email=email, password=password)
+        UserProfile.objects.create(user=user, full_name=full_name)
 
-    refresh = RefreshToken.for_user(user)
-    access = str(refresh.access_token)
+        refresh = RefreshToken.for_user(user)
+        user_data = self.get_serializer(user).data
 
-    return Response({
-        "accessToken": access,
-        "refreshToken": str(refresh),
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "fullName": full_name,
-        }
-    }, status=status.HTTP_201_CREATED)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user': user_data
+        }, status=status.HTTP_201_CREATED)
 
-@api_view(["POST"])
-def login(request):
-    email = request.data.get("email")
-    password = request.data.get("password")
 
-    if not email or not password:
-        return Response({"error": "Email and password required"}, status=status.HTTP_400_BAD_REQUEST)
+class LoginView(generics.GenericAPIView):
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = UserSerializer
 
-    # ✅ Authenticate using email as username
-    user = authenticate(username=email, password=password)
+    def post(self, request, *args, **kwargs):
+        email = request.data.get("email")
+        password = request.data.get("password")
+        user = authenticate(username=email, password=password)
 
-    if user is None:
+        if user is not None:
+            refresh = RefreshToken.for_user(user)
+            user_data = self.get_serializer(user).data
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user': user_data
+            })
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
-    # ✅ Generate JWT tokens
-    refresh = RefreshToken.for_user(user)
-    access = str(refresh.access_token)
 
-    return Response({
-        "accessToken": access,
-        "refreshToken": str(refresh),
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            # "fullName": user.full_name,
-        }
-    }, status=status.HTTP_200_OK)
+class ProfileView(generics.RetrieveUpdateAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = UserProfileSerializer
+
+    def get_object(self):
+        # The serializer is for the UserProfile, but we want to return the User object
+        # in the GET request for consistency.
+        return self.request.user.profile
+
+    def retrieve(self, request, *args, **kwargs):
+        # On GET, we serialize the User model to give a consistent response
+        user_serializer = UserSerializer(request.user)
+        return Response(user_serializer.data)
+    
+    def update(self, request, *args, **kwargs):
+        # On PUT/PATCH, we use the default RetrieveUpdateAPIView behavior
+        # which will update the UserProfile.
+        response = super().update(request, *args, **kwargs)
+        # After updating, we can return the full user object for consistency
+        user_serializer = UserSerializer(request.user)
+        return Response(user_serializer.data)
 
 
-@api_view(["GET", "PUT"])
-@permission_classes([IsAuthenticated])
-def profile(request):
-    profile = request.user.profile
+class LogoutView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
 
-    if request.method == "GET":
-        serializer = UserProfileSerializer(profile)
-        return Response(serializer.data)
-
-    elif request.method == "PUT":
-        serializer = UserProfileSerializer(profile, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
