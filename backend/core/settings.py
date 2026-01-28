@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'trips',
     'users',
+    'password_reset',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
 
@@ -51,7 +52,7 @@ REST_FRAMEWORK = {
 
 from datetime import timedelta
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
 }
 
@@ -154,3 +155,14 @@ JAZZMIN_UI_TWEAKS = {
     "brand_colour": "navbar-primary",    # Brand color matches navbar
     "body_small_text": True,             # Slightly smaller text for compact look
 }
+
+# Email Configuration for Production (Gmail Example)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('EMAIL_HOST_USER') # Your Gmail address
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD') # Your Gmail App Password
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER) # Use EMAIL_HOST_USER as default sender
+FRONTEND_PASSWORD_RESET_URL = config('FRONTEND_PASSWORD_RESET_URL', 'http://localhost:3000/reset-password')
+
