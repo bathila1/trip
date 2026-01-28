@@ -1,39 +1,3 @@
-// import { FlatList, StyleSheet, Text, View } from 'react-native';
-// import DestinationCard from '../../components/DestinationCard';
-// import { useDestinationContext } from '../../contexts/DestinationContext';
-
-// const MyTrip = () => {
-
-//   const {favorites} = useDestinationContext()
-
-//   if (favorites.length === 0) {
-//     return (
-//       <View>
-//         <Text>No favorite destinations yet.</Text>
-//       </View>
-//     )
-//   }
-
-//   return (
-//     <View>
-//       <Text>Yet to Explore...</Text>
-
-//       {/* ---rendering each item in a destination card via a FlatList--- */}
-//       <FlatList
-//         data = {favorites}
-//         renderItem={({item: favorite}) => (
-//           <DestinationCard destination={favorite} />
-//         )}
-//       />
-
-//     </View>
-//   )
-// }
-
-// export default MyTrip
-
-// const styles = StyleSheet.create({})
-
 import { Ionicons } from "@expo/vector-icons";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 import FavoriteCard from "../../components/FavoriteCard";

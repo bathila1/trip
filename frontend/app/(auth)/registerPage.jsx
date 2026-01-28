@@ -1,41 +1,3 @@
-// import { router } from 'expo-router';
-// import { useState } from 'react';
-// import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-
-// const registerPage = () => {
-//     const [userName, setUserName] = useState('')
-//     const [password, setPassword] = useState('')
-//     const [user, setUser] = useState(null)
-
-//     const loginSubmit = () => {
-//         //Login realted function will come here
-//     }
-
-//   return (
-//     <View>
-//       <Text>Ready to explore?</Text>
-//       <View>
-//         <TextInput placeholder='Username or email' value={userName} onChangeText={setUserName} />
-//         <TextInput placeholder='Password' secureTextEntry={true} value={password} onChangeText={setPassword} />
-
-//         <TouchableOpacity onPress={() => loginSubmit}>
-//           <Text>Register</Text>
-//         </TouchableOpacity>
-
-//         {/* routing to login page */}
-//         <TouchableOpacity onPress={() => router.push({pathname: '/(auth)/loginPage'})} >
-//           <Text>Already have an account?</Text>
-//         </TouchableOpacity>
-
-//       </View>
-//     </View>
-//   )
-// }
-
-// export default registerPage
-
-// const styles = StyleSheet.create({})
-
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -51,6 +13,7 @@ import {
 } from "react-native";
 import googleIcon from "../../assets/images/google.png";
 import { useUserContext } from "../../contexts/UserContext";
+import { USER_API } from "../../services/api";
 
 const RegisterPage = () => {
   const [fullName, setFullName] = useState("");
@@ -61,13 +24,9 @@ const RegisterPage = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState(""); // feedback message
-
   const [loading, setLoading] = useState(false);
 
-  const { login, updateUser } = useUserContext(); //setting error for the API
-
-  const API_URL =
-    "https://nation-operation-reserves-carrying.trycloudflare.com/"; //API URL: from bathila
+  const { login, loadProfile } = useUserContext(); //setting error for the API
 
   const registerSubmit = async () => {
     if (loading) return;
@@ -98,12 +57,7 @@ const RegisterPage = () => {
       // 2. API Request
       const newUser = { email, password, fullName };
 
-      const userDetails = {
-        email: email,
-        name: fullName,
-      };
-
-      const response = await fetch(`${API_URL}/api/auth/register/`, {
+      const response = await fetch(USER_API.register, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newUser),
@@ -120,12 +74,13 @@ const RegisterPage = () => {
       }
 
       // 4. Success Logic (Tokens present)
-      const accessToken = data.accessToken;
-      const refreshToken = data.refreshToken;
+      const accessToken = data.access;
+      const refreshToken = data.refresh;
 
       if (accessToken && refreshToken) {
-        await updateUser(userDetails);
         await login(accessToken, refreshToken);
+        const profile = await loadProfile();
+        console.log("PROFILE RIGHT AFTER REGISTER:", profile);
         setMessage("Registration successful ✅");
 
         // Navigate on success
@@ -133,6 +88,7 @@ const RegisterPage = () => {
       } else {
         // Fallback for other failures
         setError(data.message || "Registration failed ❌");
+        setMessage(data.message || "Registration failed ❌");
       }
     } catch (err) {
       setError("Error: " + err.message);

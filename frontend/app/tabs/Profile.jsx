@@ -1,90 +1,12 @@
-// import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-// import ProfPic from '../../assets/images/ProfPic.png';
-
-// const ProfileView = () => {
-//   const userData = {
-//     name: "Alex Dev",
-//     email: "alex.risk@startup.io",
-//     avatar: "https://via.placeholder.com/150",
-//   };
-
-//   // Structured to link comments to specific post context
-//   const userComments = [
-//     {
-//       id: '1',
-//       postTitle: 'AI Market Trends 2026',
-//       comment: 'I think the risk-to-reward ratio here is undervalued.'
-//     },
-//     {
-//       id: '2',
-//       postTitle: 'React Native vs Flutter',
-//       comment: 'Native modules are still king for high-performance ML integration.'
-//     },
-//     {
-//       id: '3',
-//       postTitle: 'Side Hustle: SaaS Boilerplates',
-//       comment: 'Added this to my weekend sprint list.'
-//     },
-//   ];
-
-//   const renderComment = ({ item }) => (
-//     <View style={styles.commentCard}>
-//       <Text style={styles.postReference}>On: {item.postTitle}</Text>
-//       <Text style={styles.commentText}>"{item.comment}"</Text>
-//     </View>
-//   );
-
-//   return (
-//     <SafeAreaView style={styles.container}>
-//       {/* Profile Header */}
-//       <View style={styles.header}>
-//         <Image source={ProfPic} style={styles.profilePic} />
-//         <Text style={styles.name}>{userData.name}</Text>
-//         <Text style={styles.email}>{userData.email}</Text>
-//       </View>
-
-//       {/* Activity Section */}
-//       <View style={styles.section}>
-//         <Text style={styles.sectionTitle}>Recent Post Comments</Text>
-//         <FlatList
-//           data={userComments}
-//           keyExtractor={(item) => item.id}
-//           renderItem={renderComment}
-//           showsVerticalScrollIndicator={false}
-//         />
-//       </View>
-
-//       {/* Logout */}
-//       <TouchableOpacity style={styles.logoutButton}>
-//         <Text style={styles.logoutText}>Logout</Text>
-//       </TouchableOpacity>
-//     </SafeAreaView>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   container: { flex: 1, backgroundColor: '#f8f9fa' },
-//   header: { alignItems: 'center', paddingVertical: 40, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee' },
-//   profilePic: { width: 100, height: 100, borderRadius: 50, marginBottom: 12 },
-//   name: { fontSize: 22, fontWeight: 'bold' },
-//   email: { fontSize: 14, color: '#888' },
-//   section: { flex: 1, padding: 20 },
-//   sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 15, color: '#222', textTransform: 'uppercase' },
-//   commentCard: { backgroundColor: '#fff', padding: 15, borderRadius: 12, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: '#007AFF', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
-//   postReference: { fontSize: 12, fontWeight: 'bold', color: '#007AFF', marginBottom: 4 },
-//   commentText: { fontSize: 14, color: '#444', fontStyle: 'italic' },
-//   logoutButton: { backgroundColor: '#fff', margin: 20, padding: 15, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderWeight: 1, borderColor: '#ff4444' },
-//   logoutText: { color: '#ff4444', fontWeight: 'bold' },
-// });
-
-// export default ProfileView;
-
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
+  Modal,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -94,97 +16,160 @@ import ProfPic from "../../assets/images/ProfPic.png";
 import { useUserContext } from "../../contexts/UserContext";
 
 const ProfileView = () => {
-  const { user } = useUserContext();
+  const { logout, user, loadProfile } = useUserContext();
+  const [modalVisible, setModalVisible] = useState(false);
 
-  const menuItems = [
-    {
-      id: "1",
-      title: "Saved places",
-      icon: "heart-outline",
-    },
-    {
-      id: "2",
-      title: "My trips",
-      icon: "briefcase-outline",
-    },
-    {
-      id: "3",
-      title: "Settings",
-      icon: "settings-outline",
-    },
+  // VARIABLE TO STORE SELECTED IMAGE
+  const [selectedAvatar, setSelectedAvatar] = useState(ProfPic);
+
+  useEffect(() => {
+    if (!user) loadProfile();
+  }, []);
+
+  // Abstract Traveler Avatars
+  const avatarOptions = [
+    { id: "1", url: "https://robohash.org/traveler1?set=set5" },
+    { id: "2", url: "https://robohash.org/explorer2?set=set5" },
+    { id: "3", url: "https://robohash.org/backpacker3?set=set5" },
+    { id: "4", url: "https://robohash.org/nomad4?set=set5" },
+    { id: "5", url: "https://robohash.org/pilot5?set=set5" },
+    { id: "6", url: "https://robohash.org/hiker6?set=set5" },
+    { id: "7", url: "https://robohash.org/surfer7?set=set5" },
+    { id: "8", url: "https://robohash.org/camper8?set=set5" },
+    { id: "9", url: "https://robohash.org/diver9?set=set5" },
+    { id: "10", url: "https://robohash.org/map10?set=set5" },
+    { id: "11", url: "https://robohash.org/sun11?set=set5" },
+    { id: "12", url: "https://robohash.org/sky12?set=set5" },
   ];
 
-  const { logout } = useUserContext();
-
-  const handelLogout = async () => {
+  const handleLogout = async () => {
     await logout();
     router.replace("/");
-    console.log("User Logged out successfully.");
   };
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.menuItem}>
-      <View style={styles.menuLeft}>
-        <Ionicons name={item.icon} size={22} color="#0F766E" />
-        <Text style={styles.menuText}>{item.title}</Text>
+  const selectNewAvatar = (imgUrl) => {
+    setSelectedAvatar({ uri: imgUrl });
+    setModalVisible(false);
+  };
+
+  if (!user)
+    return (
+      <View style={styles.center}>
+        <Text>Loading...</Text>
       </View>
-      <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
-    </TouchableOpacity>
-  );
+    );
 
-  if (!user) {
-    return <Text>Profile loading...</Text>;
-  }
-
-  const userData = {
-    name: user.name,
-    email: user.email,
-  };
   return (
     <SafeAreaView style={styles.container}>
-      {/* PROFILE HEADER */}
+      {/* HEADER - Matches MyTrip/Destinations Style */}
       <View style={styles.header}>
-        <Image source={ProfPic} style={styles.avatar} />
-        <Text style={styles.name}>{userData.name}</Text>
-        <Text style={styles.email}>{userData.email}</Text>
+        <View>
+          <Text style={styles.title}>My Profile</Text>
+          <Text style={styles.subtitle}>Manage your account details</Text>
+        </View>
 
-        <TouchableOpacity style={styles.editBtn}>
-          <Ionicons name="create-outline" size={16} color="#0F766E" />
-          <Text style={styles.editText}>Edit profile</Text>
+        <TouchableOpacity style={styles.logoutCircle} onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={20} color="#EF4444" />
         </TouchableOpacity>
       </View>
 
-      {/* STATS */}
-      <View style={styles.statsRow}>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>12</Text>
-          <Text style={styles.statLabel}>Favorites</Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* HERO SECTION */}
+        <View style={styles.heroSection}>
+          <View style={styles.avatarWrapper}>
+            <Image source={selectedAvatar} style={styles.avatar} />
+            <TouchableOpacity
+              style={styles.penCircle}
+              onPress={() => setModalVisible(true)}
+            >
+              <Ionicons name="images-sharp" size={16} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.userName}>{user.fullName}</Text>
+
+          <View style={styles.bioBox}>
+            <Text style={[styles.bioText, !user.bio && styles.placeholderText]}>
+              {user.bio || "No bio added yet. Tell us about your travel style!"}
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>3</Text>
-          <Text style={styles.statLabel}>Trips</Text>
+        {/* DETAILS SECTION */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Contact Information</Text>
+
+          <View style={styles.infoTile}>
+            <View style={styles.tileIcon}>
+              <Ionicons name="mail-outline" size={18} color="#64748B" />
+            </View>
+            <View>
+              <Text style={styles.tileLabel}>Email Address</Text>
+              <Text style={styles.tileValue}>{user.email}</Text>
+            </View>
+          </View>
+
+          <View style={styles.infoTile}>
+            <View style={styles.tileIcon}>
+              <Ionicons name="call-outline" size={18} color="#64748B" />
+            </View>
+            <View>
+              <Text style={styles.tileLabel}>Phone Number</Text>
+              <Text style={styles.tileValue}>
+                {user.phone || "Not provided"}
+              </Text>
+            </View>
+          </View>
         </View>
 
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>8</Text>
-          <Text style={styles.statLabel}>Reviews</Text>
+        <View style={styles.footer}>
+          <TouchableOpacity style={styles.primaryBtn} activeOpacity={0.9}>
+            <Text style={styles.primaryBtnText}>Edit Profile</Text>
+            <Ionicons name="arrow-forward" size={18} color="#fff" />
+          </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
 
-      {/* MENU */}
-      <FlatList
-        data={menuItems}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.menuList}
-      />
+      {/* POP-UP MODAL */}
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            {/* RED CLOSE BUTTON TOP RIGHT */}
+            <TouchableOpacity
+              style={styles.closeIcon}
+              onPress={() => setModalVisible(false)}
+            >
+              <Ionicons name="close-circle" size={30} color="#EF4444" />
+            </TouchableOpacity>
 
-      {/* LOGOUT */}
-      <TouchableOpacity onPress={handelLogout} style={styles.logoutBtn}>
-        <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
+            <Text style={styles.modalTitle}>Update Photo</Text>
+
+            <View style={styles.mediaOptions}>
+              <TouchableOpacity style={styles.mediaBtn}>
+                <Ionicons name="camera" size={22} color="#0F766E" />
+                <Text style={styles.mediaText}>Camera</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.mediaBtn}>
+                <Ionicons name="image" size={22} color="#0F766E" />
+                <Text style={styles.mediaText}>Gallery</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.miniDivider} />
+            <Text style={styles.gridLabel}>Traveler Avatars</Text>
+
+            <FlatList
+              data={avatarOptions}
+              numColumns={4}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity onPress={() => selectNewAvatar(item.url)}>
+                  <Image source={{ uri: item.url }} style={styles.avatarItem} />
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -192,122 +177,165 @@ const ProfileView = () => {
 export default ProfileView;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: {
-    alignItems: "center",
-    paddingVertical: 32,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    marginBottom: 10,
-  },
-
-  name: {
-    fontSize: 22,
-    fontWeight: "900",
-    color: "#0F172A",
-  },
-
-  email: {
-    fontSize: 14,
-    color: "#64748B",
-    marginTop: 2,
-  },
-
-  editBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1.5,
-    borderColor: "#0F766E",
-  },
-
-  editText: {
-    color: "#0F766E",
-    fontWeight: "700",
-    fontSize: 13,
-  },
-
-  statsRow: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginVertical: 20,
-  },
-
-  statBox: {
-    alignItems: "center",
-  },
-
-  statNumber: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: "#0F766E",
-  },
-
-  statLabel: {
-    fontSize: 12,
-    color: "#64748B",
-    marginTop: 2,
-    fontWeight: "600",
-  },
-
-  menuList: {
     paddingHorizontal: 16,
-  },
-
-  menuItem: {
+    paddingTop: 16,
+    paddingBottom: 10,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#F8FAFC",
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    marginBottom: 12,
+  },
+  title: { fontSize: 26, fontWeight: "800", color: "#0F172A" },
+  subtitle: { fontSize: 13, fontWeight: "600", color: "#64748B", marginTop: 2 },
+  logoutCircle: {
+    height: 42,
+    width: 42,
+    borderRadius: 21,
+    backgroundColor: "#FEF2F2",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#FEE2E2",
+  },
+  heroSection: { alignItems: "center", marginTop: 20, paddingHorizontal: 16 },
+  avatarWrapper: { position: "relative", marginBottom: 12 },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
-
-  menuLeft: {
+  penCircle: {
+    position: "absolute",
+    bottom: 2,
+    right: 2,
+    backgroundColor: "#0F766E",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "#FFFFFF",
+  },
+  userName: { fontSize: 22, fontWeight: "900", color: "#0F172A" },
+  bioBox: {
+    marginTop: 10,
+    backgroundColor: "#F8FAFC",
+    padding: 12,
+    borderRadius: 14,
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+  },
+  bioText: {
+    fontSize: 14,
+    color: "#475569",
+    textAlign: "center",
+    lineHeight: 20,
+    fontWeight: "600",
+  },
+  placeholderText: { color: "#94A3B8", fontStyle: "italic" },
+  section: { marginTop: 25, paddingHorizontal: 16 },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginBottom: 12,
+  },
+  infoTile: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 10,
   },
-
-  menuText: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#0F172A",
-  },
-
-  logoutBtn: {
-    flexDirection: "row",
-    justifyContent: "center",
+  tileIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "#F1F5F9",
     alignItems: "center",
-    gap: 8,
-    margin: 20,
+    justifyContent: "center",
+  },
+  tileLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#94A3B8",
+    textTransform: "uppercase",
+  },
+  tileValue: { fontSize: 14, fontWeight: "700", color: "#0F172A" },
+  footer: { paddingHorizontal: 16, marginTop: 20, paddingBottom: 40 },
+  primaryBtn: {
+    backgroundColor: "#0F766E",
     paddingVertical: 14,
     borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: "#EF4444",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
   },
+  primaryBtnText: { color: "#FFFFFF", fontSize: 16, fontWeight: "900" },
 
-  logoutText: {
-    color: "#EF4444",
-    fontWeight: "800",
-    fontSize: 15,
+  /* MODAL STYLES */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
   },
+  modalCard: {
+    backgroundColor: "#FFF",
+    width: "100%",
+    borderRadius: 24,
+    padding: 24,
+    alignItems: "center",
+    position: "relative",
+  },
+  closeIcon: { position: "absolute", top: 12, right: 12, zIndex: 10 },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#0F172A",
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  mediaOptions: { flexDirection: "row", gap: 15, marginBottom: 20 },
+  mediaBtn: {
+    alignItems: "center",
+    backgroundColor: "#F0FDFA",
+    padding: 12,
+    borderRadius: 16,
+    width: 90,
+    borderWidth: 1,
+    borderColor: "#CCFBF1",
+  },
+  mediaText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#0F766E",
+    marginTop: 4,
+  },
+  miniDivider: {
+    height: 1,
+    backgroundColor: "#F1F5F9",
+    width: "100%",
+    marginBottom: 15,
+  },
+  gridLabel: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#94A3B8",
+    textTransform: "uppercase",
+    marginBottom: 12,
+  },
+  avatarItem: { width: 60, height: 60, borderRadius: 30, margin: 6 },
 });

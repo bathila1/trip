@@ -1,46 +1,8 @@
-// import { router } from 'expo-router';
-// import { useState } from 'react';
-// import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-
-// const loginPage = () => {
-
-//     const [userName, setUserName] = useState('')
-//     const [password, setPassword] = useState('')
-//     const [user, setUser] = useState(null)
-
-//     const loginSubmit = () => {
-//         //Login realted function will come here
-//     }
-
-//   return (
-//     <View>
-//       <Text>login To WonderLand</Text>
-//       <View>
-//         <TextInput placeholder='Username or email' value={userName} onChangeText={setUserName} />
-//         <TextInput placeholder='Password' secureTextEntry={true} value={password} onChangeText={setPassword} />
-
-//         <TouchableOpacity onPress={() => loginSubmit}>
-//           <Text>Login</Text>
-//         </TouchableOpacity>
-
-//         {/* routing to register page */}
-//         <TouchableOpacity onPress={() => router.push({pathname: '/(auth)/registerPage'})} >
-//           <Text>New to WondeLand?</Text>
-//         </TouchableOpacity>
-
-//       </View>
-//     </View>
-//   )
-// }
-
-// export default loginPage
-
-// const styles = StyleSheet.create({})
-
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -49,31 +11,79 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import googleIcon from "../../assets/images/google.png";
 import { useUserContext } from "../../contexts/UserContext";
+import { USER_API } from "../../services/api";
 
 const LoginPage = () => {
-  const [identifier, setIdentifier] = useState(""); // username or email
+  const [email, setEmail] = useState(""); // username or email
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(""); // feedback message
+  const { login, loadProfile } = useUserContext();
 
-  const { logUser, user } = useUserContext();
-
-  const loginSubmit = () => {
+  const loginSubmit = async () => {
+    if (loading) return;
     setError("");
+    setMessage("");
+    setLoading(true);
 
-    if (!identifier.trim() || !password.trim()) {
-      setError("Please enter your username/email and password.");
-      return;
+    try {
+      // 1. Validation Checks (Manual setLoading reset for early returns)
+      if (!email.trim() || !password.trim()) {
+        setError("Please enter your username/email and password.");
+        setLoading(false);
+        return;
+      }
+
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters.");
+        setLoading(false);
+        return;
+      }
+
+      // 2. API Request
+      const newUser = { email, password };
+
+      const response = await fetch(USER_API.login, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newUser),
+      });
+
+      const data = await response.json();
+
+      // 3. Handle specific "Email already exists" error from data
+      if (data.error === "Invalid credentials") {
+        setError("Invalid credentials.");
+        setLoading(false);
+        return;
+      }
+
+      // 4. Success Logic (Tokens present)
+      const accessToken = data.access;
+      const refreshToken = data.refresh;
+
+      if (accessToken && refreshToken) {
+        await login(accessToken, refreshToken);
+        const profile = await loadProfile();
+        console.log("PROFILE RIGHT AFTER REGISTER:", profile);
+        setMessage("Login successful ✅");
+
+        // Navigate on success
+        router.replace("/tabs/Destinations");
+      } else {
+        // Fallback for other failures
+        setError(data.message || "Login failed ❌");
+        setMessage(data.message || "Login failed ❌");
+      }
+    } catch (err) {
+      setError("Error: " + err.message);
+    } finally {
+      setLoading(false);
     }
-
-    // ✅ your real login logic later
-    const user = {
-      userName: identifier,
-      password: password,
-    };
-    logUser(user);
-    router.replace("/(tabs)/Destinations");
   };
 
   return (
@@ -102,8 +112,8 @@ const LoginPage = () => {
           <TextInput
             placeholder="Username or email"
             placeholderTextColor="#94A3B8"
-            value={identifier}
-            onChangeText={setIdentifier}
+            value={email}
+            onChangeText={setEmail}
             style={styles.input}
             autoCapitalize="none"
             autoCorrect={false}
@@ -147,7 +157,9 @@ const LoginPage = () => {
         {/* Forgot */}
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => {}}
+          onPress={() => {
+            router.push("/(auth)/resetPassword");
+          }}
           style={styles.forgotBtn}
         >
           <Text style={styles.forgotText}>Forgot password?</Text>
@@ -161,6 +173,27 @@ const LoginPage = () => {
         >
           <Text style={styles.primaryText}>Login</Text>
           <Ionicons name="arrow-forward" size={18} color="#fff" />
+        </TouchableOpacity>
+
+        {/* Login with google */}
+        <View style={styles.dividerWrap}>
+          <View style={styles.line} />
+          <Text style={styles.dividerText}>or continue with</Text>
+          <View style={styles.line} />
+        </View>
+
+        {/* Google register */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={styles.googleBtn}
+          onPress={() => {
+            // later: google auth logic
+            console.log("Google register");
+          }}
+        >
+          <Image source={googleIcon} style={styles.googleIcon} />
+
+          <Text style={styles.googleText}>Continue with Google</Text>
         </TouchableOpacity>
 
         {/* Switch */}
@@ -313,5 +346,46 @@ const styles = StyleSheet.create({
   switchStrong: {
     color: "#0F766E",
     fontWeight: "900",
+  },
+  dividerWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 16,
+  },
+
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#E5E7EB",
+  },
+
+  dividerText: {
+    marginHorizontal: 10,
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#64748B",
+  },
+
+  googleBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 13,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
+  },
+
+  googleIcon: {
+    width: 20,
+    height: 20,
+  },
+
+  googleText: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#0F172A",
   },
 });
