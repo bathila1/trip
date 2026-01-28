@@ -1,0 +1,480 @@
+// import { router } from 'expo-router';
+// import { useState } from 'react';
+// import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
+// const registerPage = () => {
+//     const [userName, setUserName] = useState('')
+//     const [password, setPassword] = useState('')
+//     const [user, setUser] = useState(null)
+
+//     const loginSubmit = () => {
+//         //Login realted function will come here
+//     }
+
+//   return (
+//     <View>
+//       <Text>Ready to explore?</Text>
+//       <View>
+//         <TextInput placeholder='Username or email' value={userName} onChangeText={setUserName} />
+//         <TextInput placeholder='Password' secureTextEntry={true} value={password} onChangeText={setPassword} />
+
+//         <TouchableOpacity onPress={() => loginSubmit}>
+//           <Text>Register</Text>
+//         </TouchableOpacity>
+
+//         {/* routing to login page */}
+//         <TouchableOpacity onPress={() => router.push({pathname: '/(auth)/loginPage'})} >
+//           <Text>Already have an account?</Text>
+//         </TouchableOpacity>
+
+//       </View>
+//     </View>
+//   )
+// }
+
+// export default registerPage
+
+// const styles = StyleSheet.create({})
+
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useState } from "react";
+import {
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import googleIcon from "../../assets/images/google.png";
+import { useUserContext } from "../../contexts/UserContext";
+
+const RegisterPage = () => {
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState(""); // feedback message
+
+  const [loading, setLoading] = useState(false);
+
+  const { login, updateUser } = useUserContext(); //setting error for the API
+
+  const API_URL =
+    "https://nation-operation-reserves-carrying.trycloudflare.com/"; //API URL: from bathila
+
+  const registerSubmit = async () => {
+    if (loading) return;
+    setError("");
+    setMessage("");
+    setLoading(true);
+
+    try {
+      // 1. Validation Checks (Manual setLoading reset for early returns)
+      if (!fullName.trim() || !email.trim()) {
+        setError("Please fill all fields.");
+        setLoading(false);
+        return;
+      }
+
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters.");
+        setLoading(false);
+        return;
+      }
+
+      if (password !== confirm) {
+        setError("Passwords do not match.");
+        setLoading(false);
+        return;
+      }
+
+      // 2. API Request
+      const newUser = { email, password, fullName };
+
+      const userDetails = {
+        email: email,
+        name: fullName,
+      };
+
+      const response = await fetch(`${API_URL}/api/auth/register/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newUser),
+      });
+
+      const data = await response.json();
+      console.log("REGISTER DATA:", data);
+
+      // 3. Handle specific "Email already exists" error from data
+      if (data.error === "Email already registered") {
+        setError("Email already exists. Login in insted.");
+        setLoading(false);
+        return;
+      }
+
+      // 4. Success Logic (Tokens present)
+      const accessToken = data.accessToken;
+      const refreshToken = data.refreshToken;
+
+      if (accessToken && refreshToken) {
+        await updateUser(userDetails);
+        await login(accessToken, refreshToken);
+        setMessage("Registration successful ✅");
+
+        // Navigate on success
+        router.replace("/tabs/Destinations");
+      } else {
+        // Fallback for other failures
+        setError(data.message || "Registration failed ❌");
+      }
+    } catch (err) {
+      setError("Error: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      {/* Top */}
+      <View style={styles.header}>
+        <View style={styles.badge}>
+          <Ionicons name="compass-outline" size={14} color="#0F766E" />
+          <Text style={styles.badgeText}>Create your account</Text>
+        </View>
+
+        <Text style={styles.title}>Ready to explore?</Text>
+        <Text style={styles.subtitle}>
+          Save your favorite places and plan trips faster
+        </Text>
+      </View>
+
+      {/* Card */}
+      <View style={styles.card}>
+        {/* Full name */}
+        <View style={styles.inputWrap}>
+          <Ionicons name="id-card-outline" size={18} color="#64748B" />
+          <TextInput
+            placeholder="Full name"
+            placeholderTextColor="#94A3B8"
+            value={fullName}
+            onChangeText={setFullName}
+            style={styles.input}
+            returnKeyType="next"
+          />
+        </View>
+
+        {/* Email */}
+        <View style={styles.inputWrap}>
+          <Ionicons name="mail-outline" size={18} color="#64748B" />
+          <TextInput
+            placeholder="Email"
+            placeholderTextColor="#94A3B8"
+            value={email}
+            onChangeText={setEmail}
+            style={styles.input}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            returnKeyType="next"
+          />
+        </View>
+
+        {/* Username
+        <View style={styles.inputWrap}>
+          <Ionicons name="person-outline" size={18} color="#64748B" />
+          <TextInput
+            placeholder="Username"
+            placeholderTextColor="#94A3B8"
+            value={username}
+            onChangeText={setUsername}
+            style={styles.input}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="next"
+          />
+        </View> */}
+
+        {/* Password */}
+        <View style={styles.inputWrap}>
+          <Ionicons name="lock-closed-outline" size={18} color="#64748B" />
+          <TextInput
+            placeholder="Password"
+            placeholderTextColor="#94A3B8"
+            value={password}
+            onChangeText={setPassword}
+            style={styles.input}
+            autoCapitalize="none"
+            autoCorrect={false}
+            secureTextEntry={!showPw}
+            returnKeyType="next"
+          />
+          <TouchableOpacity
+            onPress={() => setShowPw((s) => !s)}
+            style={styles.eyeBtn}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name={showPw ? "eye-off-outline" : "eye-outline"}
+              size={18}
+              color="#64748B"
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Confirm password */}
+        <View style={styles.inputWrap}>
+          <Ionicons name="shield-checkmark-outline" size={18} color="#64748B" />
+          <TextInput
+            placeholder="Confirm password"
+            placeholderTextColor="#94A3B8"
+            value={confirm}
+            onChangeText={setConfirm}
+            style={styles.input}
+            autoCapitalize="none"
+            autoCorrect={false}
+            secureTextEntry={!showConfirm}
+            returnKeyType="done"
+          />
+          <TouchableOpacity
+            onPress={() => setShowConfirm((s) => !s)}
+            style={styles.eyeBtn}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name={showConfirm ? "eye-off-outline" : "eye-outline"}
+              size={18}
+              color="#64748B"
+            />
+          </TouchableOpacity>
+        </View>
+
+        {!!error && <Text style={styles.error}>{error}</Text>}
+
+        {/* Submit */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          style={[styles.primaryBtn, loading && { opacity: 0.6 }]}
+          onPress={registerSubmit}
+          disabled={loading}
+        >
+          <Text style={styles.primaryText}>
+            {loading ? "Creating..." : "Create account"}
+          </Text>
+          <Ionicons name="arrow-forward" size={18} color="#fff" />
+        </TouchableOpacity>
+
+        {/* Login with google */}
+        <View style={styles.dividerWrap}>
+          <View style={styles.line} />
+          <Text style={styles.dividerText}>or continue with</Text>
+          <View style={styles.line} />
+        </View>
+
+        {/* Google register */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={styles.googleBtn}
+          onPress={() => {
+            // later: google auth logic
+            console.log("Google register");
+          }}
+        >
+          <Image source={googleIcon} style={styles.googleIcon} />
+
+          <Text style={styles.googleText}>Continue with Google</Text>
+        </TouchableOpacity>
+
+        {/* Switch */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => router.push("/(auth)/loginPage")}
+          style={styles.switchBtn}
+        >
+          <Text style={styles.switchText}>
+            Already have an account?{" "}
+            <Text style={styles.switchStrong}>Login</Text>
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
+  );
+};
+
+export default RegisterPage;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 18,
+    justifyContent: "center",
+  },
+
+  header: {
+    marginBottom: 18,
+    alignItems: "center",
+  },
+
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: "#ECFDF5",
+    borderWidth: 1,
+    borderColor: "#A7F3D0",
+    marginBottom: 12,
+  },
+
+  badgeText: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#0F766E",
+  },
+
+  title: {
+    fontSize: 26,
+    fontWeight: "900",
+    color: "#0F172A",
+    textAlign: "center",
+  },
+
+  subtitle: {
+    marginTop: 6,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#64748B",
+    textAlign: "center",
+  },
+
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 18,
+    padding: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 2,
+  },
+
+  inputWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    marginBottom: 12,
+  },
+
+  input: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#0F172A",
+    padding: 0,
+  },
+
+  eyeBtn: {
+    padding: 6,
+  },
+
+  error: {
+    color: "#EF4444",
+    fontWeight: "700",
+    marginBottom: 10,
+    marginTop: -2,
+  },
+
+  primaryBtn: {
+    backgroundColor: "#0F766E",
+    paddingVertical: 14,
+    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+
+  primaryText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "900",
+  },
+
+  switchBtn: {
+    marginTop: 14,
+    alignItems: "center",
+  },
+
+  switchText: {
+    color: "#64748B",
+    fontWeight: "700",
+  },
+
+  switchStrong: {
+    color: "#0F766E",
+    fontWeight: "900",
+  },
+
+  dividerWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 16,
+  },
+
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#E5E7EB",
+  },
+
+  dividerText: {
+    marginHorizontal: 10,
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#64748B",
+  },
+
+  googleBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 13,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
+  },
+
+  googleIcon: {
+    width: 20,
+    height: 20,
+  },
+
+  googleText: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+});
