@@ -8,7 +8,7 @@ export default function FetchingDestinations() {
 
   useEffect(() => {
     fetch(
-      "https://nonsocialistic-blanca-cleverishly.ngrok-free.dev/api/destinations/",
+      `${BASE_URL}api/destinations/`,
     )
       .then((res) => res.json())
       .then((data) => setDestinations(data))
