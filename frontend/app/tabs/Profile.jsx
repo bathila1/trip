@@ -88,7 +88,7 @@ const ProfileView = () => {
               <Ionicons name="images-sharp" size={16} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.userName}>{user.fullName}</Text>
+          <Text style={styles.userName}>{user.full_name}</Text>
 
           <View style={styles.bioBox}>
             <Text style={[styles.bioText, !user.bio && styles.placeholderText]}>
