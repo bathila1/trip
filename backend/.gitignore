@@ -1,8 +1,23 @@
- .env
- __pycache__/
- *.pyc
-.env
 __pycache__/
 *.pyc
+.env
 db.sqlite3
 venv/
+
+# Ignore IDE specific files
+.vscode/
+
+# Ignore logs
+*.log
+
+# Ignore system files
+.DS_Store
+
+# Ignore test artifacts
+*.pytest_cache/
+
+# Ignore migration files
+migrations/
+*.sqlite3
+*.db
+*.db-journal

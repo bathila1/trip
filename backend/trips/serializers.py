@@ -5,7 +5,7 @@ from .models import Destination
 class TripSerializer(serializers.ModelSerializer):
     class Meta:
         model = Trip
-        fields = ['id', 'name', 'destination', 'start_date', 'end_date', 'notes']
+        fields = '__all__'
 
 
 class DestinationSerializer(serializers.ModelSerializer):

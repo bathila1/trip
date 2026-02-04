@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'trips',
     'users',
     'rest_framework_simplejwt',
-
 ]
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -70,7 +69,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -153,3 +152,17 @@ JAZZMIN_UI_TWEAKS = {
     "brand_colour": "navbar-primary",    # Brand color matches navbar
     "body_small_text": True,             # Slightly smaller text for compact look
 }
+
+#  email service settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+
+#  password reset token expiration time in seconds ( 15 minutes )
+PASSWORD_RESET_TIMEOUT = 900 

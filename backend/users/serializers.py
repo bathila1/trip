@@ -8,19 +8,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ["username", "full_name", "phone", "bio", "profile_picture"]
-
-
-# class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
-#     def validate(self, attrs):
-#         # Replace username with email
-#         email = attrs.get("username")   # SimpleJWT still calls it "username"
-#         password = attrs.get("password")
-
-#         try:
-#             user = User.objects.get(email=email)
-#             attrs["username"] = user.username  # map email → username internally
-#         except User.DoesNotExist:
-#             raise Exception("No user found with this email")
-
-#         return super().validate(attrs)
+        
+        #all fields with **
+        fields = "__all__"
