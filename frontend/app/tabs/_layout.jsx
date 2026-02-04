@@ -43,9 +43,23 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen
-        name="MyTrip"
+        name="Trips"
         options={{
-          title: "Saved",
+          title: "Trips",
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons
+              name={focused ? "briefcase" : "briefcase-outline"}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="Favorites"
+        options={{
+          title: "Favorites",
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons
               name={focused ? "bookmark" : "bookmark-outline"}

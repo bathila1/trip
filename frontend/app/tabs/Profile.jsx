@@ -56,6 +56,9 @@ const ProfileView = () => {
     return (
       <View style={styles.center}>
         <Text>Loading...</Text>
+        <TouchableOpacity onPress={handleLogout}>
+          <Text>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
 

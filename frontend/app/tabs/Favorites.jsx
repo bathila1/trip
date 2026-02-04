@@ -3,7 +3,7 @@ import { FlatList, StyleSheet, Text, View } from "react-native";
 import FavoriteCard from "../../components/FavoriteCard";
 import { useDestinationContext } from "../../contexts/DestinationContext";
 
-const MyTrip = () => {
+const Favorites = () => {
   const { favorites } = useDestinationContext();
 
   // Empty state
@@ -47,7 +47,7 @@ const MyTrip = () => {
   );
 };
 
-export default MyTrip;
+export default Favorites;
 
 const styles = StyleSheet.create({
   container: {
