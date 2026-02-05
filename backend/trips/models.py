@@ -88,14 +88,27 @@ class Day(models.Model):
         return f"{self.trip.name} - Day {self.day_index}"
 
 class Destination(models.Model):
+    CATEGORY_CHOICES = [
+        (1, "Beaches"),
+        (2, "Hills"),
+        (3, "Cultural"),
+        (4, "Wildlife"),
+        (5, "Historical"),
+    ]
+
     name = models.CharField(max_length=255)
     image_url = models.URLField()
     short_description = models.TextField()
-    category = models.CharField(max_length=120)
+    long_description = models.TextField(default="")
+    category = models.IntegerField(choices=CATEGORY_CHOICES)
+    latitude = models.FloatField(default=0)
+    longitude = models.FloatField(default=0)
     rating = models.FloatField(default=0)
 
     def __str__(self):
         return self.name
+
+
 class Stop(models.Model):
     day = models.ForeignKey(
         Day,

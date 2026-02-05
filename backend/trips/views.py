@@ -43,5 +43,5 @@ class StopViewSet(viewsets.ModelViewSet):
 class DestinationViewSet(viewsets.ModelViewSet):
     queryset = Destination.objects.all() 
     serializer_class = DestinationSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated]
 

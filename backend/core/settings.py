@@ -5,10 +5,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 import os
 # Where collectstatic will put all static files
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Usual static URL
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
 
@@ -22,8 +22,10 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = True   
 
 CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8000",
     "https://nonsocialistic-blanca-cleverishly.ngrok-free.dev",
     "https://*.trycloudflare.com",
+    "https://bathila.pythonanywhere.com"
 ]
 
 ALLOWED_HOSTS = [
@@ -31,7 +33,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "nonsocialistic-blanca-cleverishly.ngrok-free.dev",
     ".trycloudflare.com",
-    
+    "bathila.pythonanywhere.com"
 ]
 
 

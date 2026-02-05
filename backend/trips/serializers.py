@@ -38,6 +38,8 @@ class TripSerializer(serializers.ModelSerializer):
     class Meta:
         model = Trip
         fields = ["id", "user", "name", "start_date", "end_date", "created_at", "days"]
+        read_only_fields = ["user", "created_at"]
+
 
     def create(self, validated_data):
         days_data = validated_data.pop("days", [])
