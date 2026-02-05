@@ -1,16 +1,22 @@
 from django.contrib import admin
-from .models import Trip
+from .models import Trip, Day, Destination, Stop
 
 @admin.register(Trip)
 class TripAdmin(admin.ModelAdmin):
-    list_display = ('name', 'destination', 'start_date', 'end_date')
-    search_fields = ('name', 'destination')
-    list_filter = ('destination', 'start_date')
-
-from .models import Destination
+    list_display = ["name", "user", "start_date", "end_date", "created_at"]
+    list_filter = ["user", "start_date", "end_date"]
 
 @admin.register(Destination)
 class DestinationAdmin(admin.ModelAdmin):
-    list_display = ("name", "category", "latitude", "longitude", "image_url")
-    search_fields = ("name", "category")
-    list_filter = ("category",)
+    list_display = ["name", "category", "rating"]
+    list_filter = ["category"]
+
+@admin.register(Day)
+class DayAdmin(admin.ModelAdmin):
+    list_display = ["trip", "day_index", "date"]
+    list_filter = ["trip"]
+
+@admin.register(Stop)
+class StopAdmin(admin.ModelAdmin):
+    list_display = ["day", "destination", "order"]
+    list_filter = ["day", "destination"]
