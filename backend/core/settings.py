@@ -1,5 +1,7 @@
 from pathlib import Path
 
+APPEND_SLASH = True
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -59,10 +61,11 @@ REST_FRAMEWORK = {
 
 from datetime import timedelta
 SIMPLE_JWT = {
+    "ROTATE_REFRESH_TOKENS": True,   # issue a new refresh token each time
+    "BLACKLIST_AFTER_ROTATION": True, # old refresh tokens become invalid
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
 }
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -139,7 +142,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
 
 JAZZMIN_SETTINGS = {
     "site_title": "Trip Admin",

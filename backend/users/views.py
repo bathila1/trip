@@ -20,11 +20,72 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
+# for google login
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from google.oauth2 import id_token
+from google.auth.transport import requests
+import json
+
+@csrf_exempt
+def google_login(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            token = data.get("token")
+
+            # Verify with Google
+            idinfo = id_token.verify_oauth2_token(token, requests.Request())
+
+            email = idinfo["email"]
+            name = idinfo.get("name", "")
+            picture = idinfo.get("picture", "")
+
+            # Get or create user
+            user, created = User.objects.get_or_create(
+                username=email,
+                defaults={"first_name": name, "email": email}
+            )
+
+            # If new user, create UserProfile
+            if created:
+                UserProfile.objects.create(
+                    user=user,
+                    full_name=name,
+                    profile_picture=picture
+                )
+            else:
+                # Update profile if exists
+                profile, _ = UserProfile.objects.get_or_create(user=user)
+                if not profile.full_name:
+                    profile.full_name = name
+                if picture and not profile.profile_picture:
+                    profile.profile_picture = picture
+                profile.save()
+
+            # Issue JWT
+            refresh = RefreshToken.for_user(user)
+            return JsonResponse({
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "full_name": user.profile.full_name,
+                    "profile_picture": user.profile.profile_picture,
+                }
+            })
+
+        except ValueError:
+            return JsonResponse({"error": "Invalid Google token"}, status=400)
+
+    return JsonResponse({"error": "POST required"}, status=405)
+
 @api_view(["POST"])
 def register(request):
     email = request.data.get("email")
     password = request.data.get("password")
-    full_name = request.data.get("full_name", "")  # ✅ capture full name
+    full_name = request.data.get("full_name", "")
 
     if not email or not password:
         return Response({"error": "Email and password required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -33,18 +94,17 @@ def register(request):
         return Response({"error": "Email already registered"}, status=status.HTTP_400_BAD_REQUEST)
 
     user = User.objects.create_user(username=email, email=email, password=password)
-    UserProfile.objects.create(user=user, full_name=full_name)
+    profile = UserProfile.objects.create(user=user, full_name=full_name)
 
     refresh = RefreshToken.for_user(user)
-    access = str(refresh.access_token)
-
     return Response({
-        "access": access,
+        "access": str(refresh.access_token),
         "refresh": str(refresh),
         "user": {
             "id": user.id,
             "email": user.email,
-            "full_name": full_name,
+            "full_name": profile.full_name,
+            "profile_picture": profile.profile_picture,
         }
     }, status=status.HTTP_201_CREATED)
 
@@ -56,25 +116,24 @@ def login(request):
     if not email or not password:
         return Response({"error": "Email and password required"}, status=status.HTTP_400_BAD_REQUEST)
 
-    # ✅ Authenticate using email as username
     user = authenticate(username=email, password=password)
-
     if user is None:
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
-    # ✅ Generate JWT tokens
-    refresh = RefreshToken.for_user(user)
-    access = str(refresh.access_token)
+    profile = getattr(user, "profile", None)
 
+    refresh = RefreshToken.for_user(user)
     return Response({
-        "access": access,
+        "access": str(refresh.access_token),
         "refresh": str(refresh),
         "user": {
             "id": user.id,
             "email": user.email,
-            "full_name": user.profile.full_name if hasattr(user, 'profile') else None,
+            "full_name": profile.full_name if profile else None,
+            "profile_picture": profile.profile_picture if profile else None,
         }
     }, status=status.HTTP_200_OK)
+
 
 
 @api_view(["GET", "PUT"])
