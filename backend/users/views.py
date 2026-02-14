@@ -27,6 +27,34 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 import json
 
+from .models import FavouriteDestination
+from .serializers import FavouriteDestinationSerializer
+
+@api_view(["GET", "POST", "DELETE"])
+@permission_classes([IsAuthenticated])
+def favourite_destinations(request):
+    if request.method == "GET":
+        favourites = FavouriteDestination.objects.filter(user=request.user)
+        serializer = FavouriteDestinationSerializer(favourites, many=True)
+        return Response(serializer.data)
+
+    elif request.method == "POST":
+        destination_id = request.data.get("destination_id")
+        if not destination_id:
+            return Response({"error": "destination_id required"}, status=400)
+
+        fav, created = FavouriteDestination.objects.get_or_create(
+            user=request.user,
+            destination_id=destination_id
+        )
+        serializer = FavouriteDestinationSerializer(fav)
+        return Response(serializer.data, status=201 if created else 200)
+
+    elif request.method == "DELETE":
+        destination_id = request.data.get("destination_id")
+        FavouriteDestination.objects.filter(user=request.user, destination_id=destination_id).delete()
+        return Response({"message": "Removed from favourites"}, status=200)
+
 @csrf_exempt
 def google_login(request):
     if request.method == "POST":
@@ -85,7 +113,7 @@ def google_login(request):
 def register(request):
     email = request.data.get("email")
     password = request.data.get("password")
-    full_name = request.data.get("full_name", "")
+    full_name = request.data.get("full_name")
 
     if not email or not password:
         return Response({"error": "Email and password required"}, status=status.HTTP_400_BAD_REQUEST)
