@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Image,
@@ -16,156 +16,192 @@ import ProfPic from "../../assets/images/ProfPic.png";
 import { useUserContext } from "../../contexts/UserContext";
 
 const ProfileView = () => {
-  const { logout, user, loadProfile } = useUserContext();
+  const { user, loadProfile, updateProfile, logout } = useUserContext();
+
   const [modalVisible, setModalVisible] = useState(false);
 
-  // VARIABLE TO STORE SELECTED IMAGE
-  const [selectedAvatar, setSelectedAvatar] = useState(ProfPic);
+  // ✅ avatar state
+  const [avatarUri, setAvatarUri] = useState(null);
+  const [avatarBuster, setAvatarBuster] = useState(0);
 
   useEffect(() => {
-    if (!user) loadProfile();
+    loadProfile();
   }, []);
 
-  // Abstract Traveler Avatars
-  const avatarOptions = [
-    { id: "1", url: "https://robohash.org/traveler1?set=set5" },
-    { id: "2", url: "https://robohash.org/explorer2?set=set5" },
-    { id: "3", url: "https://robohash.org/backpacker3?set=set5" },
-    { id: "4", url: "https://robohash.org/nomad4?set=set5" },
-    { id: "5", url: "https://robohash.org/pilot5?set=set5" },
-    { id: "6", url: "https://robohash.org/hiker6?set=set5" },
-    { id: "7", url: "https://robohash.org/surfer7?set=set5" },
-    { id: "8", url: "https://robohash.org/camper8?set=set5" },
-    { id: "9", url: "https://robohash.org/diver9?set=set5" },
-    { id: "10", url: "https://robohash.org/map10?set=set5" },
-    { id: "11", url: "https://robohash.org/sun11?set=set5" },
-    { id: "12", url: "https://robohash.org/sky12?set=set5" },
-  ];
+  useEffect(() => {
+    if (!user) return;
+    setAvatarUri(user.profile_picture || null);
+    setAvatarBuster((v) => v + 1);
+  }, [user?.profile_picture]);
+
+  const avatarSource = avatarUri
+    ? { uri: `${avatarUri}?v=${avatarBuster}` }
+    : ProfPic;
+
+  const avatarOptions = useMemo(
+    () => [
+      { id: "1", url: "https://robohash.org/traveler1?set=set5" },
+      { id: "2", url: "https://robohash.org/explorer2?set=set5" },
+      { id: "3", url: "https://robohash.org/backpacker3?set=set5" },
+      { id: "4", url: "https://robohash.org/nomad4?set=set5" },
+      { id: "5", url: "https://robohash.org/pilot5?set=set5" },
+      { id: "6", url: "https://robohash.org/hiker6?set=set5" },
+      { id: "7", url: "https://robohash.org/surfer7?set=set5" },
+      { id: "8", url: "https://robohash.org/camper8?set=set5" },
+      { id: "9", url: "https://robohash.org/diver9?set=set5" },
+      { id: "10", url: "https://robohash.org/map10?set=set5" },
+      { id: "11", url: "https://robohash.org/sun11?set=set5" },
+      { id: "12", url: "https://robohash.org/sky12?set=set5" },
+    ],
+    [],
+  );
+
+  const selectNewAvatar = async (imgUrl) => {
+    setAvatarUri(imgUrl);
+    setAvatarBuster((v) => v + 1);
+    setModalVisible(false);
+
+    const res = await updateProfile({ profile_picture: imgUrl });
+    if (!res.ok) {
+      alert(res.message || "Avatar update failed");
+      return;
+    }
+    await loadProfile();
+  };
 
   const handleLogout = async () => {
     await logout();
     router.replace("/");
   };
 
-  const selectNewAvatar = (imgUrl) => {
-    setSelectedAvatar({ uri: imgUrl });
-    setModalVisible(false);
-  };
-
-  if (!user)
+  if (!user) {
     return (
-      <View style={styles.center}>
-        <Text>Loading...</Text>
-        <TouchableOpacity onPress={handleLogout}>
-          <Text>Retry</Text>
-        </TouchableOpacity>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.center}>
+          <Text style={{ fontWeight: "800" }}>Loading...</Text>
+          <TouchableOpacity onPress={loadProfile} style={{ marginTop: 12 }}>
+            <Text style={{ color: "#0F766E", fontWeight: "800" }}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
+  }
+
+  const displayName = user.full_name?.trim() ? user.full_name : "Add your name";
+  const displayBio = user.bio?.trim() ? user.bio : null;
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* HEADER - Matches MyTrip/Destinations Style */}
+      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>My Profile</Text>
           <Text style={styles.subtitle}>Manage your account details</Text>
         </View>
 
-        <TouchableOpacity style={styles.logoutCircle} onPress={handleLogout}>
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutCircle}>
           <Ionicons name="log-out-outline" size={20} color="#EF4444" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* HERO SECTION */}
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+        {/* Hero */}
         <View style={styles.heroSection}>
           <View style={styles.avatarWrapper}>
-            <Image source={selectedAvatar} style={styles.avatar} />
+            <Image source={avatarSource} style={styles.avatar} />
             <TouchableOpacity
-              style={styles.penCircle}
               onPress={() => setModalVisible(true)}
+              style={styles.penCircle}
+              activeOpacity={0.85}
             >
-              <Ionicons name="images-sharp" size={16} color="#FFFFFF" />
+              <Ionicons name="images" size={16} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.userName}>{user.full_name}</Text>
 
+          <Text style={styles.userName}>{displayName}</Text>
+
+          {/* Bio */}
           <View style={styles.bioBox}>
-            <Text style={[styles.bioText, !user.bio && styles.placeholderText]}>
-              {user.bio || "No bio added yet. Tell us about your travel style!"}
+            <Text
+              style={[
+                styles.bioText,
+                !displayBio ? styles.placeholderText : null,
+              ]}
+              numberOfLines={3}
+            >
+              {displayBio ||
+                "Add a short bio so people know your travel vibe ✨"}
             </Text>
           </View>
         </View>
 
-        {/* DETAILS SECTION */}
+        {/* Info tiles */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Information</Text>
+          <Text style={styles.sectionTitle}>Account</Text>
 
           <View style={styles.infoTile}>
             <View style={styles.tileIcon}>
-              <Ionicons name="mail-outline" size={18} color="#64748B" />
+              <Ionicons name="mail" size={18} color="#0F766E" />
             </View>
-            <View>
-              <Text style={styles.tileLabel}>Email Address</Text>
-              <Text style={styles.tileValue}>{user.email}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.tileLabel}>Email</Text>
+              <Text style={styles.tileValue}>{user.email || "—"}</Text>
             </View>
           </View>
 
           <View style={styles.infoTile}>
             <View style={styles.tileIcon}>
-              <Ionicons name="call-outline" size={18} color="#64748B" />
+              <Ionicons name="call" size={18} color="#0F766E" />
             </View>
-            <View>
-              <Text style={styles.tileLabel}>Phone Number</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.tileLabel}>Phone</Text>
               <Text style={styles.tileValue}>
-                {user.phone || "Not provided"}
+                {user.phone || "Phone not provided"}
               </Text>
             </View>
           </View>
         </View>
 
+        {/* Footer button */}
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.primaryBtn} activeOpacity={0.9}>
+          <TouchableOpacity
+            onPress={() => router.push("/dashboard/profile/EditProfile")}
+            style={styles.primaryBtn}
+            activeOpacity={0.9}
+          >
+            <Ionicons name="create-outline" size={18} color="#FFFFFF" />
             <Text style={styles.primaryBtnText}>Edit Profile</Text>
-            <Ionicons name="arrow-forward" size={18} color="#fff" />
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* POP-UP MODAL */}
+      {/* Avatar Modal */}
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            {/* RED CLOSE BUTTON TOP RIGHT */}
             <TouchableOpacity
-              style={styles.closeIcon}
               onPress={() => setModalVisible(false)}
+              style={styles.closeIcon}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Ionicons name="close-circle" size={30} color="#EF4444" />
             </TouchableOpacity>
 
-            <Text style={styles.modalTitle}>Update Photo</Text>
-
-            <View style={styles.mediaOptions}>
-              <TouchableOpacity style={styles.mediaBtn}>
-                <Ionicons name="camera" size={22} color="#0F766E" />
-                <Text style={styles.mediaText}>Camera</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.mediaBtn}>
-                <Ionicons name="image" size={22} color="#0F766E" />
-                <Text style={styles.mediaText}>Gallery</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.modalTitle}>Choose an avatar</Text>
 
             <View style={styles.miniDivider} />
-            <Text style={styles.gridLabel}>Traveler Avatars</Text>
+
+            <Text style={styles.gridLabel}>Pick one</Text>
 
             <FlatList
               data={avatarOptions}
               numColumns={4}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <TouchableOpacity onPress={() => selectNewAvatar(item.url)}>
+                <TouchableOpacity
+                  onPress={() => selectNewAvatar(item.url)}
+                  activeOpacity={0.85}
+                >
                   <Image source={{ uri: item.url }} style={styles.avatarItem} />
                 </TouchableOpacity>
               )}
@@ -182,6 +218,7 @@ export default ProfileView;
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFFFFF" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
+
   header: {
     paddingHorizontal: 16,
     paddingTop: 16,
@@ -192,6 +229,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 26, fontWeight: "800", color: "#0F172A" },
   subtitle: { fontSize: 13, fontWeight: "600", color: "#64748B", marginTop: 2 },
+
   logoutCircle: {
     height: 42,
     width: 42,
@@ -202,29 +240,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#FEE2E2",
   },
-  heroSection: { alignItems: "center", marginTop: 20, paddingHorizontal: 16 },
+
+  heroSection: { alignItems: "center", marginTop: 10, paddingHorizontal: 16 },
   avatarWrapper: { position: "relative", marginBottom: 12 },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
     borderWidth: 1,
     borderColor: "#E5E7EB",
+    backgroundColor: "#F8FAFC",
   },
   penCircle: {
     position: "absolute",
     bottom: 2,
     right: 2,
     backgroundColor: "#0F766E",
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 3,
     borderColor: "#FFFFFF",
   },
   userName: { fontSize: 22, fontWeight: "900", color: "#0F172A" },
+
   bioBox: {
     marginTop: 10,
     backgroundColor: "#F8FAFC",
@@ -242,13 +283,15 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   placeholderText: { color: "#94A3B8", fontStyle: "italic" },
-  section: { marginTop: 25, paddingHorizontal: 16 },
+
+  section: { marginTop: 22, paddingHorizontal: 16 },
   sectionTitle: {
     fontSize: 15,
     fontWeight: "800",
     color: "#0F172A",
     marginBottom: 12,
   },
+
   infoTile: {
     flexDirection: "row",
     alignItems: "center",
@@ -275,7 +318,8 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   tileValue: { fontSize: 14, fontWeight: "700", color: "#0F172A" },
-  footer: { paddingHorizontal: 16, marginTop: 20, paddingBottom: 40 },
+
+  footer: { paddingHorizontal: 16, marginTop: 14 },
   primaryBtn: {
     backgroundColor: "#0F766E",
     paddingVertical: 14,
@@ -287,7 +331,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: { color: "#FFFFFF", fontSize: 16, fontWeight: "900" },
 
-  /* MODAL STYLES */
+  /* MODAL */
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.6)",
@@ -299,8 +343,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     width: "100%",
     borderRadius: 24,
-    padding: 24,
-    alignItems: "center",
+    padding: 20,
     position: "relative",
   },
   closeIcon: { position: "absolute", top: 12, right: 12, zIndex: 10 },
@@ -308,30 +351,14 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "900",
     color: "#0F172A",
-    marginBottom: 20,
-    marginTop: 10,
-  },
-  mediaOptions: { flexDirection: "row", gap: 15, marginBottom: 20 },
-  mediaBtn: {
-    alignItems: "center",
-    backgroundColor: "#F0FDFA",
-    padding: 12,
-    borderRadius: 16,
-    width: 90,
-    borderWidth: 1,
-    borderColor: "#CCFBF1",
-  },
-  mediaText: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: "#0F766E",
-    marginTop: 4,
+    marginBottom: 10,
+    marginTop: 6,
   },
   miniDivider: {
     height: 1,
     backgroundColor: "#F1F5F9",
     width: "100%",
-    marginBottom: 15,
+    marginBottom: 14,
   },
   gridLabel: {
     fontSize: 12,
@@ -340,5 +367,5 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     marginBottom: 12,
   },
-  avatarItem: { width: 60, height: 60, borderRadius: 30, margin: 6 },
+  avatarItem: { width: 64, height: 64, borderRadius: 32, margin: 6 },
 });

@@ -1,12 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import {
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import FavoriteCard from "../../components/FavoriteCard";
 import { useDestinationContext } from "../../contexts/DestinationContext";
@@ -36,6 +36,7 @@ const TripDetailsPage = () => {
   const { destinations } = useDestinationContext();
 
   const trip = getTripById(String(tripId));
+  console.log("TRIPS FROM:", trip);
 
   if (!trip) {
     return (

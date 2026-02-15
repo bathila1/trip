@@ -2,13 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { useDestinationContext } from "../../contexts/DestinationContext";
@@ -54,10 +54,12 @@ const EditTripPage = () => {
   const { tripId } = useLocalSearchParams();
   const { getTripById, updateTrip } = useTripContext();
   const { destinations, favorites } = useDestinationContext();
+  const { createTrip } = useTripContext();
 
   const trip = getTripById(String(tripId));
 
   // local editable state
+  const [error, setError] = useState("");
   const [name, setName] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
@@ -189,16 +191,23 @@ const EditTripPage = () => {
 
   const canSave = name.trim() && startDate && endDate;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!trip) return;
     if (!canSave) return;
 
-    updateTrip(trip.id, {
+    setError("");
+
+    const res = await updateTrip(trip.id, {
       name: name.trim(),
       startDate,
       endDate,
       days,
     });
+
+    if (!res.ok) {
+      setError(res.message);
+      return;
+    }
 
     router.back();
   };

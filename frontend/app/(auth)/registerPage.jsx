@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -11,11 +11,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 import googleIcon from "../../assets/images/google.png";
 import { useUserContext } from "../../contexts/UserContext";
-import { USER_API } from "../../services/api";
+import { useGoogleAuth } from "../../services/googleAuth";
 
 const RegisterPage = () => {
+  /* ---------------- STATE ---------------- */
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,75 +25,89 @@ const RegisterPage = () => {
   const [showPw, setShowPw] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState(""); // feedback message
   const [loading, setLoading] = useState(false);
 
-  const { login, loadProfile } = useUserContext(); //setting error for the API
+  /* ---------------- CONTEXT ---------------- */
+  const { authRegister, authGoogle } = useUserContext();
 
+  /* ---------------- GOOGLE ---------------- */
+  const { request, response, promptAsync, getGoogleTokenFromResponse } =
+    useGoogleAuth();
+
+  useEffect(() => {
+    if (response?.type !== "success") return;
+
+    const run = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        if (!authGoogle) {
+          setError("Auth provider not ready.");
+          return;
+        }
+
+        const token = getGoogleTokenFromResponse();
+        if (!token) {
+          setError("Google token not received.");
+          return;
+        }
+
+        const res = await authGoogle(token);
+        if (!res?.ok) {
+          setError(res?.message || "Google login failed");
+          return;
+        }
+
+        router.replace("/tabs/Destinations");
+      } catch (e) {
+        setError(e?.message || "Google login failed");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    run();
+  }, [response]);
+
+  /* ---------------- REGISTER ---------------- */
   const registerSubmit = async () => {
     if (loading) return;
+
     setError("");
-    setMessage("");
     setLoading(true);
 
+    // ✅ Validation
+    if (
+      !fullName.trim() ||
+      !email.trim() ||
+      !password.trim() ||
+      !confirm.trim()
+    ) {
+      setError("Please fill all fields.");
+      setLoading(false);
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      setLoading(false);
+      return;
+    }
+    if (password !== confirm) {
+      setError("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      // 1. Validation Checks (Manual setLoading reset for early returns)
-      if (!fullName.trim() || !email.trim()) {
-        setError("Please fill all fields.");
-        setLoading(false);
+      const res = await authRegister(fullName.trim(), email.trim(), password);
+
+      if (!res.ok) {
+        setError(res.message);
         return;
       }
 
-      if (password.length < 6) {
-        setError("Password must be at least 6 characters.");
-        setLoading(false);
-        return;
-      }
-
-      if (password !== confirm) {
-        setError("Passwords do not match.");
-        setLoading(false);
-        return;
-      }
-
-      // 2. API Request
-      const newUser = { email, password, fullName };
-
-      const response = await fetch(USER_API.register, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newUser),
-      });
-
-      const data = await response.json();
-      console.log("REGISTER DATA:", data);
-
-      // 3. Handle specific "Email already exists" error from data
-      if (data.error === "Email already registered") {
-        setError("Email already exists. Login in insted.");
-        setLoading(false);
-        return;
-      }
-
-      // 4. Success Logic (Tokens present)
-      const accessToken = data.access;
-      const refreshToken = data.refresh;
-
-      if (accessToken && refreshToken) {
-        await login(accessToken, refreshToken);
-        const profile = await loadProfile();
-        console.log("PROFILE RIGHT AFTER REGISTER:", profile);
-        setMessage("Registration successful ✅");
-
-        // Navigate on success
-        router.replace("/tabs/Destinations");
-      } else {
-        // Fallback for other failures
-        setError(data.message || "Registration failed ❌");
-        setMessage(data.message || "Registration failed ❌");
-      }
-    } catch (err) {
-      setError("Error: " + err.message);
+      router.replace("/tabs/Destinations");
     } finally {
       setLoading(false);
     }
@@ -105,14 +121,12 @@ const RegisterPage = () => {
       {/* Top */}
       <View style={styles.header}>
         <View style={styles.badge}>
-          <Ionicons name="compass-outline" size={14} color="#0F766E" />
-          <Text style={styles.badgeText}>Create your account</Text>
+          <Ionicons name="sparkles-outline" size={14} color="#0F766E" />
+          <Text style={styles.badgeText}>Create account</Text>
         </View>
 
-        <Text style={styles.title}>Ready to explore?</Text>
-        <Text style={styles.subtitle}>
-          Save your favorite places and plan trips faster
-        </Text>
+        <Text style={styles.title}>Join WonderLand</Text>
+        <Text style={styles.subtitle}>Save places and plan trips faster</Text>
       </View>
 
       {/* Card */}
@@ -146,21 +160,6 @@ const RegisterPage = () => {
           />
         </View>
 
-        {/* Username
-        <View style={styles.inputWrap}>
-          <Ionicons name="person-outline" size={18} color="#64748B" />
-          <TextInput
-            placeholder="Username"
-            placeholderTextColor="#94A3B8"
-            value={username}
-            onChangeText={setUsername}
-            style={styles.input}
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="next"
-          />
-        </View> */}
-
         {/* Password */}
         <View style={styles.inputWrap}>
           <Ionicons name="lock-closed-outline" size={18} color="#64748B" />
@@ -188,7 +187,7 @@ const RegisterPage = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Confirm password */}
+        {/* Confirm */}
         <View style={styles.inputWrap}>
           <Ionicons name="shield-checkmark-outline" size={18} color="#64748B" />
           <TextInput
@@ -201,6 +200,7 @@ const RegisterPage = () => {
             autoCorrect={false}
             secureTextEntry={!showConfirm}
             returnKeyType="done"
+            onSubmitEditing={registerSubmit}
           />
           <TouchableOpacity
             onPress={() => setShowConfirm((s) => !s)}
@@ -215,6 +215,7 @@ const RegisterPage = () => {
           </TouchableOpacity>
         </View>
 
+        {/* Error */}
         {!!error && <Text style={styles.error}>{error}</Text>}
 
         {/* Submit */}
@@ -230,24 +231,21 @@ const RegisterPage = () => {
           <Ionicons name="arrow-forward" size={18} color="#fff" />
         </TouchableOpacity>
 
-        {/* Login with google */}
+        {/* Divider */}
         <View style={styles.dividerWrap}>
           <View style={styles.line} />
           <Text style={styles.dividerText}>or continue with</Text>
           <View style={styles.line} />
         </View>
 
-        {/* Google register */}
+        {/* Google */}
         <TouchableOpacity
           activeOpacity={0.85}
-          style={styles.googleBtn}
-          onPress={() => {
-            // later: google auth logic
-            console.log("Google register");
-          }}
+          style={[styles.googleBtn, (!request || loading) && { opacity: 0.6 }]}
+          onPress={() => promptAsync()}
+          disabled={!request || loading}
         >
           <Image source={googleIcon} style={styles.googleIcon} />
-
           <Text style={styles.googleText}>Continue with Google</Text>
         </TouchableOpacity>
 

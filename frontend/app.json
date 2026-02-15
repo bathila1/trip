@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "trip-app",
+    "owner": "nejan_s",
     "slug": "trip-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -39,11 +40,18 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "785884e3-5535-4a7d-a2b6-e63211305fe4"
+      }
     }
   }
 }

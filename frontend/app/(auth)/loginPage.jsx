@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -11,9 +11,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 import googleIcon from "../../assets/images/google.png";
 import { useUserContext } from "../../contexts/UserContext";
-import { USER_API } from "../../services/api";
+import { useGoogleAuth } from "../../services/googleAuth";
 
 const LoginPage = () => {
   const [email, setEmail] = useState(""); // username or email
@@ -21,66 +22,82 @@ const LoginPage = () => {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(""); // feedback message
-  const { login, loadProfile } = useUserContext();
+  const [message, setMessage] = useState("");
+
+  // ✅ call context ONCE
+  const { authLogin, authGoogle } = useUserContext();
+
+  // ✅ google hook
+  const { request, response, promptAsync, getGoogleTokenFromResponse } =
+    useGoogleAuth();
+
+  // ✅ handle google callback
+  useEffect(() => {
+    if (response?.type !== "success") return;
+
+    const run = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        setMessage("");
+
+        if (!authGoogle) {
+          setError("Auth provider not ready.");
+          return;
+        }
+
+        const token = getGoogleTokenFromResponse();
+        if (!token) {
+          setError("Google token not received.");
+          return;
+        }
+
+        const res = await authGoogle(token);
+        if (!res?.ok) {
+          setError(res?.message || "Google login failed");
+          return;
+        }
+
+        router.replace("/tabs/Destinations");
+      } catch (e) {
+        setError(e?.message || "Google login failed");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    run();
+  }, [response]);
 
   const loginSubmit = async () => {
     if (loading) return;
+
     setError("");
     setMessage("");
     setLoading(true);
 
+    if (!email.trim() || !password.trim()) {
+      setError("Please enter your username/email and password.");
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      // 1. Validation Checks (Manual setLoading reset for early returns)
-      if (!email.trim() || !password.trim()) {
-        setError("Please enter your username/email and password.");
-        setLoading(false);
+      const res = await authLogin(email.trim(), password);
+
+      if (!res.ok) {
+        setError(res.message);
         return;
       }
 
-      if (password.length < 6) {
-        setError("Password must be at least 6 characters.");
-        setLoading(false);
-        return;
-      }
-
-      // 2. API Request
-      const newUser = { email, password };
-
-      const response = await fetch(USER_API.login, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newUser),
-      });
-
-      const data = await response.json();
-
-      // 3. Handle specific "Email already exists" error from data
-      if (data.error === "Invalid credentials") {
-        setError("Invalid credentials.");
-        setLoading(false);
-        return;
-      }
-
-      // 4. Success Logic (Tokens present)
-      const accessToken = data.access;
-      const refreshToken = data.refresh;
-
-      if (accessToken && refreshToken) {
-        await login(accessToken, refreshToken);
-        const profile = await loadProfile();
-        console.log("PROFILE RIGHT AFTER REGISTER:", profile);
-        setMessage("Login successful ✅");
-
-        // Navigate on success
-        router.replace("/tabs/Destinations");
-      } else {
-        // Fallback for other failures
-        setError(data.message || "Login failed ❌");
-        setMessage(data.message || "Login failed ❌");
-      }
-    } catch (err) {
-      setError("Error: " + err.message);
+      setMessage("Login successful ✅");
+      router.replace("/tabs/Destinations");
     } finally {
       setLoading(false);
     }
@@ -151,15 +168,13 @@ const LoginPage = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Error */}
         {!!error && <Text style={styles.error}>{error}</Text>}
+        {!!message && <Text style={styles.success}>{message}</Text>}
 
         {/* Forgot */}
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => {
-            router.push("/(auth)/resetPassword");
-          }}
+          onPress={() => router.push("/(auth)/resetPassword")}
           style={styles.forgotBtn}
         >
           <Text style={styles.forgotText}>Forgot password?</Text>
@@ -168,31 +183,31 @@ const LoginPage = () => {
         {/* Submit */}
         <TouchableOpacity
           activeOpacity={0.9}
-          style={styles.primaryBtn}
+          style={[styles.primaryBtn, loading && { opacity: 0.6 }]}
           onPress={loginSubmit}
+          disabled={loading}
         >
-          <Text style={styles.primaryText}>Login</Text>
+          <Text style={styles.primaryText}>
+            {loading ? "Loading..." : "Login"}
+          </Text>
           <Ionicons name="arrow-forward" size={18} color="#fff" />
         </TouchableOpacity>
 
-        {/* Login with google */}
+        {/* Divider */}
         <View style={styles.dividerWrap}>
           <View style={styles.line} />
           <Text style={styles.dividerText}>or continue with</Text>
           <View style={styles.line} />
         </View>
 
-        {/* Google register */}
+        {/* Google */}
         <TouchableOpacity
           activeOpacity={0.85}
-          style={styles.googleBtn}
-          onPress={() => {
-            // later: google auth logic
-            console.log("Google register");
-          }}
+          style={[styles.googleBtn, (!request || loading) && { opacity: 0.6 }]}
+          onPress={() => promptAsync()}
+          disabled={!request || loading}
         >
           <Image source={googleIcon} style={styles.googleIcon} />
-
           <Text style={styles.googleText}>Continue with Google</Text>
         </TouchableOpacity>
 
@@ -306,6 +321,13 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
 
+  success: {
+    color: "#16A34A",
+    fontWeight: "800",
+    marginBottom: 10,
+    marginTop: -2,
+  },
+
   forgotBtn: {
     alignSelf: "flex-end",
     marginBottom: 14,
@@ -347,6 +369,7 @@ const styles = StyleSheet.create({
     color: "#0F766E",
     fontWeight: "900",
   },
+
   dividerWrap: {
     flexDirection: "row",
     alignItems: "center",

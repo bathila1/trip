@@ -2,13 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { useDestinationContext } from "../../contexts/DestinationContext";
@@ -54,6 +54,7 @@ const CreateTripPage = () => {
   const { destinations, favorites } = useDestinationContext();
   const { createTrip } = useTripContext();
 
+  const [error, setError] = useState("");
   const [name, setName] = useState("");
   const [startDate, setStartDate] = useState(null); // "YYYY-MM-DD"
   const [endDate, setEndDate] = useState(null);
@@ -178,15 +179,22 @@ const CreateTripPage = () => {
 
   const canSave = name.trim() && startDate && endDate;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!canSave) return;
 
-    createTrip({
+    setError("");
+
+    const res = await createTrip({
       name: name.trim(),
       startDate,
       endDate,
       days,
     });
+
+    if (!res.ok) {
+      setError(res.message);
+      return;
+    }
 
     router.back();
   };

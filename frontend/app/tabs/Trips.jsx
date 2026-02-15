@@ -1,19 +1,24 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useEffect } from "react";
 import {
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import TripCard from "../../components/TripCard";
 import { useDestinationContext } from "../../contexts/DestinationContext";
 import { useTripContext } from "../../contexts/TripContext";
 
 const Trips = () => {
-  const { trips } = useTripContext();
+  const { trips, fetchTrips } = useTripContext();
   const { destinations } = useDestinationContext();
+
+  useEffect(() => {
+    fetchTrips();
+  }, []);
 
   const getCover = (trip) => {
     // try first added place image

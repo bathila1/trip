@@ -2,31 +2,48 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { useUserContext } from "../../contexts/UserContext";
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const handleSubmit = () => {
+  const { authResetPassword } = useUserContext();
+
+  const handleSubmit = async () => {
+    if (loading) return;
     setError("");
     setMessage("");
+    setLoading(true);
 
     if (!email.trim()) {
       setError("Please enter your email.");
+      setLoading(false);
       return;
     }
 
-    // UI only — later you can call your API here
-    setMessage("If this email exists, we’ll send reset instructions ✅");
+    try {
+      const res = await authResetPassword(email.trim());
+
+      if (!res.ok) {
+        setError(res.message);
+        return;
+      }
+
+      setMessage(res.message); // "Email sent successfully!"
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -72,11 +89,13 @@ const ForgotPasswordPage = () => {
         {/* Submit */}
         <TouchableOpacity
           activeOpacity={0.9}
-          style={styles.primaryBtn}
+          style={[styles.primaryBtn, loading && { opacity: 0.6 }]}
           onPress={handleSubmit}
+          disabled={loading}
         >
-          <Text style={styles.primaryText}>Send instructions</Text>
-          <Ionicons name="arrow-forward" size={18} color="#fff" />
+          <Text style={styles.primaryText}>
+            {loading ? "Sending..." : "Send instructions"}
+          </Text>
         </TouchableOpacity>
 
         {/* Back to login */}
@@ -221,5 +240,20 @@ const styles = StyleSheet.create({
   switchStrong: {
     color: "#0F766E",
     fontWeight: "900",
+  },
+  primaryBtn: {
+    backgroundColor: "#0F766E",
+    height: 52,
+    borderRadius: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+
+    // ⭐ add this
+    elevation: 3, // Android
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
   },
 });

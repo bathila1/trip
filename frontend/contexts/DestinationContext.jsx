@@ -1,189 +1,145 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { getDestinationsAPI } from "../services/destinationService"; // <-- adjust path
+import { useUserContext } from "./UserContext"; // <-- adjust path to your auth/user context
 
 export const destinationContext = createContext();
 export const useDestinationContext = () => useContext(destinationContext);
 
 const DestinationContext = ({ children }) => {
-  //sample array of destination objects
-  const destinations = [
-    {
-      id: 1,
-      name: "Ella Rock",
-      shortDescription: "Scenic hike with beautiful views.",
-      longDescription:
-        "Ella Rock is one of Sri Lanka’s most stunning viewpoints.",
-      imageUrl: "https://picsum.photos/900/600?random=1",
-      rating: 4.7,
-      location: { latitude: 6.865, longitude: 81.0468 },
-      isFavorite: false,
-      category: "hills",
-    },
-    {
-      id: 2,
-      name: "Sigiriya",
-      shortDescription: "Historic rock fortress.",
-      longDescription:
-        "Sigiriya is an ancient rock fortress located in the central province.",
-      imageUrl: "https://picsum.photos/900/600?random=2",
-      rating: 4.9,
-      location: { latitude: 7.957, longitude: 80.7603 },
-      isFavorite: false,
-      category: "historical",
-    },
-    {
-      id: 3,
-      name: "Mirissa",
-      shortDescription: "Relaxing beach with whale watching.",
-      longDescription:
-        "Mirissa offers one of the most beautiful beaches in Sri Lanka.",
-      imageUrl: "https://picsum.photos/900/600?random=3",
-      rating: 4.8,
-      location: { latitude: 5.9485, longitude: 80.4716 },
-      isFavorite: false,
-      category: "beaches",
-    },
-    {
-      id: 4,
-      name: "Nuwara Eliya",
-      shortDescription: "Sri Lanka’s little England.",
-      longDescription: "Known for its cool climate and tea plantations.",
-      imageUrl: "https://picsum.photos/900/600?random=4",
-      rating: 4.6,
-      location: { latitude: 6.9497, longitude: 80.7891 },
-      isFavorite: false,
-      category: "hills",
-    },
-    {
-      id: 5,
-      name: "Unawatuna",
-      shortDescription: "Beach paradise for snorkeling.",
-      longDescription:
-        "Unawatuna is one of Sri Lanka’s most iconic coastal areas.",
-      imageUrl: "https://picsum.photos/900/600?random=5",
-      rating: 4.5,
-      location: { latitude: 6.0131, longitude: 80.2468 },
-      isFavorite: false,
-      category: "beaches",
-    },
-    {
-      id: 6,
-      name: "Kandy",
-      shortDescription: "Cultural capital of Sri Lanka.",
-      longDescription: "Home to the Temple of the Tooth Relic.",
-      imageUrl: "https://picsum.photos/900/600?random=6",
-      rating: 4.8,
-      location: { latitude: 7.2906, longitude: 80.6337 },
-      isFavorite: false,
-      category: "cultural",
-    },
-    {
-      id: 7,
-      name: "Haputale",
-      shortDescription: "Underrated hill country escape.",
-      longDescription: "Haputale is known for tea estates and misty views.",
-      imageUrl: "https://picsum.photos/900/600?random=7",
-      rating: 4.7,
-      location: { latitude: 6.7657, longitude: 80.9635 },
-      isFavorite: false,
-      category: "hills",
-    },
-    {
-      id: 8,
-      name: "Bentota",
-      shortDescription: "Beach + water sports heaven.",
-      longDescription: "Bentota is famous for water sports.",
-      imageUrl: "https://picsum.photos/900/600?random=8",
-      rating: 4.4,
-      location: { latitude: 6.4204, longitude: 79.9956 },
-      isFavorite: false,
-      category: "beaches",
-    },
-    {
-      id: 9,
-      name: "Arugam Bay",
-      shortDescription: "Top surfing beach in Sri Lanka.",
-      longDescription: "Arugam Bay has international recognition for surfing.",
-      imageUrl: "https://picsum.photos/900/600?random=9",
-      rating: 4.8,
-      location: { latitude: 6.8433, longitude: 81.8304 },
-      isFavorite: false,
-      category: "wildlife",
-    },
-    {
-      id: 10,
-      name: "Jaffna",
-      shortDescription: "Northern cultural and historical hub.",
-      longDescription: "Jaffna offers unique cuisine and northern culture.",
-      imageUrl: "https://picsum.photos/900/600?random=10",
-      rating: 4.3,
-      location: { latitude: 9.6615, longitude: 80.0255 },
-      isFavorite: false,
-      category: "cultural",
-    },
-  ];
+  // ---- AUTH (needs accessToken + onUnauthorized refresh function) ----
+  const { accessToken, onUnauthorized } = useUserContext();
 
-  // const [destinations, setDestinations] = useState([]);
+  // ---- STATE ----
+  const [destinations, setDestinations] = useState([]);
+  const [loadingDestinations, setLoadingDestinations] = useState(false);
+  const [destinationsError, setDestinationsError] = useState("");
 
-  const categories = [
-    { id: 0, name: "All" },
-    { id: 1, name: "Beaches" },
-    { id: 2, name: "Hills" },
-    { id: 3, name: "Cultural" },
-    { id: 4, name: "Wildlife" },
-    { id: 5, name: "Historical" },
-  ];
-
-  //getting added favorite destinations
+  // favorites
   const [favorites, setFavorites] = useState([]);
 
-  // -----ALL FUCNTIONS RELATED TO FAVORITES DESTINATIONS-----
-  //adding fasvorite destination to the array
-  function addToFavorites(destination) {
-    setFavorites((favorites) => [...favorites, destination]);
-  }
+  // categories + filtering
+  const categories = useMemo(
+    () => [
+      { id: 0, name: "All" },
+      { id: 1, name: "Beaches" },
+      { id: 2, name: "Hills" },
+      { id: 3, name: "Cultural" },
+      { id: 4, name: "Wildlife" },
+      { id: 5, name: "Historical" },
+    ],
+    [],
+  );
 
-  //removing favorite destination from the array
-  function removeFromFavorites(destination) {
-    setFavorites(favorites.filter((fav) => fav.id !== destination.id));
-  }
-
-  //checking whether a destination is favorite or not(returns boolean)
-  function isFavorite(destination) {
-    return favorites.some((fav) => fav.id === destination.id);
-  }
-  // -----ALL FUCNTIONS RELATED TO FAVORITES DESTINATIONS-----
-
-  //-----ALL FUNCTIONS RELATED TO FILTERING DESTINATIONS BY CATEGORY-----
   const [selectCategory, setSelectCategory] = useState("All");
-  const [filteredDestinations, setFilteredDestinations] = useState([
-    ...destinations,
-  ]);
+  const [filteredDestinations, setFilteredDestinations] = useState([]);
 
-  function destinationByCategory(category) {
-    setSelectCategory(category);
-    if (category !== "All") {
-      setFilteredDestinations(
-        destinations.filter(
-          (destination) => destination.category === category.toLowerCase(),
-        ),
-      );
-    } else {
-      setFilteredDestinations(destinations);
+  // ---- helpers ----
+  const tokenGate = () => {
+    if (!accessToken) {
+      return {
+        ok: false,
+        message: "Missing access token (user not logged in?)",
+      };
     }
-  }
-  //-----ALL FUNCTIONS RELATED TO FILTERING DESTINATIONS BY CATEGORY-----
+    return null;
+  };
+
+  // Map API -> UI shape (adjust field names to match your backend response)
+  const toUiDestination = (d) => ({
+    id: d.id,
+    name: d.name ?? d.title ?? "Unknown",
+    shortDescription: d.shortDescription ?? d.short_description ?? "",
+    longDescription: d.longDescription ?? d.long_description ?? "",
+    imageUrl: d.imageUrl ?? d.image_url ?? d.image ?? "",
+    rating: typeof d.rating === "number" ? d.rating : Number(d.rating || 0),
+    location: {
+      latitude: Number(d.latitude ?? d.location?.latitude ?? 0),
+      longitude: Number(d.longitude ?? d.location?.longitude ?? 0),
+    },
+    // IMPORTANT: your filter expects lowercase category values like "beaches"
+    category: (d.category ?? "").toString().toLowerCase(),
+  });
+
+  // ---- FETCH from API ----
+  const fetchDestinations = async () => {
+    const gate = tokenGate();
+    if (gate) {
+      setDestinationsError(gate.message);
+      return gate;
+    }
+
+    setLoadingDestinations(true);
+    setDestinationsError("");
+
+    try {
+      const data = await getDestinationsAPI(accessToken, onUnauthorized);
+
+      // supports list OR paginated
+      const list = Array.isArray(data) ? data : data?.results || [];
+      const mapped = list.map(toUiDestination);
+
+      setDestinations(mapped);
+      return { ok: true, count: mapped.length };
+    } catch (e) {
+      setDestinationsError(e.message || "Failed to fetch destinations");
+      return { ok: false, message: e.message };
+    } finally {
+      setLoadingDestinations(false);
+    }
+  };
+
+  // ---- FILTERING ----
+  const destinationByCategory = (category) => {
+    setSelectCategory(category);
+  };
+
+  // keep filtered list updated when category or destinations change
+  useEffect(() => {
+    if (selectCategory === "All") {
+      setFilteredDestinations(destinations);
+    } else {
+      setFilteredDestinations(
+        destinations.filter((d) => d.category === selectCategory.toLowerCase()),
+      );
+    }
+  }, [destinations, selectCategory]);
+
+  // ---- FAVORITES ----
+  const addToFavorites = (destination) => {
+    setFavorites((prev) =>
+      prev.some((f) => f.id === destination.id) ? prev : [...prev, destination],
+    );
+  };
+
+  const removeFromFavorites = (destination) => {
+    setFavorites((prev) => prev.filter((fav) => fav.id !== destination.id));
+  };
+
+  const isFavorite = (destination) => {
+    return favorites.some((fav) => fav.id === destination.id);
+  };
+
+  // OPTIONAL: auto fetch when token becomes available
+  useEffect(() => {
+    if (accessToken) fetchDestinations();
+  }, [accessToken]);
 
   const value = {
     destinations,
+    setDestinations,
+    loadingDestinations,
+    destinationsError,
+    fetchDestinations,
+
     favorites,
     addToFavorites,
     removeFromFavorites,
     isFavorite,
+
     categories,
     destinationByCategory,
     filteredDestinations,
     selectCategory,
-    // setDestinations
   };
 
   return (

@@ -1,24 +1,18 @@
-import { useEffect } from "react";
-import { useDestinationContext } from "../contexts/DestinationContext";
-
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
-
-export default function FetchingDestinations() {
-  const { destinations, setDestinations } = useDestinationContext();
-
-  useEffect(() => {
-    fetch(
-      `${BASE_URL}api/destinations/`,
-    )
-      .then((res) => res.json())
-      .then((data) => setDestinations(data))
-      .catch((err) => console.error("API error:", err));
-  }, []);
-}
 
 export const USER_API = {
   login: `${BASE_URL}/api/auth/login/`,
   register: `${BASE_URL}/api/auth/register/`,
-  refresh: `${BASE_URL}api/auth/token/refresh/`,
+  refresh: `${BASE_URL}/api/auth/refresh/`,
   profile: `${BASE_URL}/api/auth/profile/`,
+  resetPassword: `${BASE_URL}/api/auth/password-reset/`,
+  google: `${BASE_URL}/api/auth/google/`,
+};
+
+export const DESTINATIONS_API = {
+  destinations: `${BASE_URL}/api/destinations/`,
+};
+
+export const TRIPS_API = {
+  trips: `${BASE_URL}/api/trips/`,
 };
