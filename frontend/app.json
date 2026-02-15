@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "trip-app",
-    "owner": "nejan_s",
+    "owner": "bathila",
     "slug": "trip-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,9 +10,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bathila.tripapp"
     },
     "android": {
+      "package": "com.bathila.tripapp",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -50,8 +52,14 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "785884e3-5535-4a7d-a2b6-e63211305fe4"
+        "projectId": "6864b463-6244-4e6c-ab90-d195fea131ad"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/6864b463-6244-4e6c-ab90-d195fea131ad"
     }
   }
 }
