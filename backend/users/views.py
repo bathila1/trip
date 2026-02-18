@@ -2,7 +2,7 @@
 from decouple import config
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
-from .models import UserProfile
+from .models import AvatarSuggestion, UserProfile
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -235,3 +235,11 @@ def confirm_password_reset(request):
     user.set_password(new_password)
     user.save()
     return Response({"message": "Password has been reset successfully!"}, status=status.HTTP_200_OK)
+
+# send avatar suggestions api
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def avatar_suggestions(request):
+    suggestions = AvatarSuggestion.objects.all()
+    data = [{"id": s.id, "image_url": s.image_url} for s in suggestions]
+    return Response(data)

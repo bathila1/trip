@@ -86,21 +86,31 @@ class Day(models.Model):
 
     def __str__(self):
         return f"{self.trip.name} - Day {self.day_index}"
+    
+# for catogory filter
+class Category(models.Model):
+    name = models.CharField(max_length=255)
+    icon_url = models.URLField(blank=True)
+
+    def __str__(self):
+        return self.name
+
+# things_to_do  [
+# {"id":1, "topic": "Hiking", "desc":  "kandak naginn puluwn", "img_arr": [ {"id": 1, "url": "imageurl"}] }
+# ]
+
 
 class Destination(models.Model):
-    CATEGORY_CHOICES = [
-        (1, "Beaches"),
-        (2, "Hills"),
-        (3, "Cultural"),
-        (4, "Wildlife"),
-        (5, "Historical"),
-    ]
-
     name = models.CharField(max_length=255)
     image_url = models.URLField()
+    image_array = models.JSONField(default=list)
     short_description = models.TextField()
     long_description = models.TextField(default="")
-    category = models.IntegerField(choices=CATEGORY_CHOICES)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        related_name="destinations"
+    )
     latitude = models.FloatField(default=0)
     longitude = models.FloatField(default=0)
     rating = models.FloatField(default=0)
@@ -108,6 +118,18 @@ class Destination(models.Model):
     def __str__(self):
         return self.name
 
+class ThingToDo(models.Model):
+    destination_id = models.ForeignKey(
+        Destination,
+        on_delete=models.CASCADE,
+        related_name="things_to_do"
+    )
+    topic = models.CharField(max_length=255)
+    description = models.TextField()
+    image_array = models.JSONField(default=list, blank=True)
+
+    def __str__(self):
+        return self.topic
 
 class Stop(models.Model):
     day = models.ForeignKey(

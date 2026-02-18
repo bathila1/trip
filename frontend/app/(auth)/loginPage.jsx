@@ -28,8 +28,7 @@ const LoginPage = () => {
   const { authLogin, authGoogle } = useUserContext();
 
   // ✅ google hook
-  const { request, response, promptAsync, getGoogleTokenFromResponse } =
-    useGoogleAuth();
+  const { request, response, promptAsync, getGoogleTokenFromResponse } = useGoogleAuth();
 
   // ✅ handle google callback
   useEffect(() => {
@@ -57,7 +56,7 @@ const LoginPage = () => {
           setError(res?.message || "Google login failed");
           return;
         }
-
+        setMessage("Google login successful ✅");
         router.replace("/tabs/Destinations");
       } catch (e) {
         setError(e?.message || "Google login failed");
@@ -96,12 +95,17 @@ const LoginPage = () => {
         return;
       }
 
-      setMessage("Login successful ✅");
       router.replace("/tabs/Destinations");
     } finally {
       setLoading(false);
     }
   };
+
+  if (error) {
+    console.log("Error:", error);
+  } else {
+    console.log("no error");
+  }
 
   return (
     <KeyboardAvoidingView

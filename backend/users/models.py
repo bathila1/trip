@@ -25,3 +25,10 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s profile"
+    
+# defaultly showing avatar suggestions api
+class AvatarSuggestion(models.Model):
+    image_url = models.URLField()
+
+    def __str__(self):
+        return self.image_url

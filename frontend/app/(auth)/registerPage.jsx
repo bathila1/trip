@@ -31,8 +31,7 @@ const RegisterPage = () => {
   const { authRegister, authGoogle } = useUserContext();
 
   /* ---------------- GOOGLE ---------------- */
-  const { request, response, promptAsync, getGoogleTokenFromResponse } =
-    useGoogleAuth();
+  const { request, response, promptAsync, getGoogleTokenFromResponse, redirectUri } = useGoogleAuth();
 
   useEffect(() => {
     if (response?.type !== "success") return;
@@ -123,6 +122,7 @@ const RegisterPage = () => {
         <View style={styles.badge}>
           <Ionicons name="sparkles-outline" size={14} color="#0F766E" />
           <Text style={styles.badgeText}>Create account</Text>
+          <Text style={{ color: "red"}}>{redirectUri}</Text>
         </View>
 
         <Text style={styles.title}>Join WonderLand</Text>

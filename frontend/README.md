@@ -1,2 +1,2 @@
-push 1: 1/28/26
-push 2: 1/28/26
+    // "scheme": "tripapp",
+    should add after production mode

@@ -1,10 +1,22 @@
 from rest_framework import serializers
-from .models import Trip, Day, Destination, Stop
+from .models import Category, ThingToDo, Trip, Day, Destination, Stop
 
 class DestinationSerializer(serializers.ModelSerializer):
+    #  show thingstodo foreign key in destination serializer
+    things_to_do = serializers.SerializerMethodField()
     class Meta:
         model = Destination
         fields = "__all__"
+
+    def get_things_to_do(self, obj):
+        things = ThingToDo.objects.filter(destination_id=obj.id)
+        return ThingToDoSerializer(things, many=True).data
+
+class ThingToDoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ThingToDo
+        fields = "__all__"
+
 
 class StopSerializer(serializers.ModelSerializer):
     destination = DestinationSerializer(read_only=True)
@@ -67,3 +79,9 @@ class TripSerializer(serializers.ModelSerializer):
                 Stop.objects.create(day=day, **stop_data)
 
         return instance
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = "__all__"
+

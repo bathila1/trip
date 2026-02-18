@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
-from .models import UserProfile
+from .models import UserProfile, FavouriteDestination
 
 # Inline profile editor inside User admin
 class UserProfileInline(admin.StackedInline):
@@ -35,3 +35,18 @@ class UserProfileAdmin(admin.ModelAdmin):
         return "No Image"
 
     profile_pic_preview.short_description = "Preview"
+
+# favorite destination model and admin
+@admin.register(FavouriteDestination)
+class FavoriteDestinationAdmin(admin.ModelAdmin):
+    list_display = ["user", "destination"]
+    list_filter = ["user"]
+    search_fields = ["user__username", "destination__name"]
+
+# avatar suggestion model and admin
+from .models import AvatarSuggestion
+@admin.register(AvatarSuggestion)
+class AvatarSuggestionAdmin(admin.ModelAdmin):
+    list_display = ["image_url"]
+    list_filter = ["image_url"]
+    search_fields = ["image_url"]

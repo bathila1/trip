@@ -5,7 +5,7 @@ import * as WebBrowser from "expo-web-browser";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const projectId = "6864b463-6244-4e6c-ab90-d195fea131ad";
+const projectId = Constants.expoConfig?.extra?.eas?.projectId;
 
 // put your real client ids here or env
 const ANDROID =
@@ -17,22 +17,27 @@ const WEB =
 
 const redirectUri = AuthSession.makeRedirectUri({
   useProxy: true,
-  projectId: projectId,
+  //to solve  [Error: Cannot use the AuthSession proxy because the project full name is not defined. Prefer AuthRequest in combination with an Expo Development Client build of your application. To continue using the AuthSession proxy, specify the project full name (@owner/slug) using the projectNameForProxy option.]
+  projectNameForProxy: "@bathila/trip-app",
 });
 
-console.log("✅ projectId:", projectId);
-console.log("✅ Redirect URI:", redirectUri);
+console.log("Redirect URI:", redirectUri);
 
 export const useGoogleAuth = () => {
   const [request, response, promptAsync] = Google.useAuthRequest({
-  androidClientId: ANDROID,
-  iosClientId: IOS,
-  webClientId: WEB,
-  expoClientId: "127516239222-u0ovpru2q91d814g5ms2omhcpbl3tc2a.apps.googleusercontent.com",
-  scopes: ["openid", "profile", "email"],
-  responseType: "id_token",
-  projectNameForProxy: "@bathila/trip-app", // ✅ matches app.json
-  redirectUri,
+    expoClientId: WEB,
+    androidClientId: ANDROID,
+    iosClientId: IOS,
+    webClientId: WEB,
+    scopes: ["openid", "profile", "email"],
+    responseType: "id_token",
+    projectId,
+    prompt: "select_account",
+    // redirectUri: "https://auth.expo.io/@bathila/trip-app", // Use the correct redirect URI for your project
+    // for again opening the app after google login, you can use the default redirect URI provided by expo-auth-session or set up a custom scheme and use it here
+    // redirectUri: AuthSession.getRedirectUrl({ scheme: "tripapp" }),
+    redirectUri
+
   });
 
   const getGoogleTokenFromResponse = () => {
@@ -44,5 +49,5 @@ export const useGoogleAuth = () => {
     );
   };
 
-  return { request, response, promptAsync, getGoogleTokenFromResponse };
+  return { request, response, promptAsync, getGoogleTokenFromResponse, redirectUri };
 };

@@ -1,6 +1,6 @@
 from rest_framework import viewsets, permissions
-from .models import Trip, Day, Destination, Stop
-from .serializers import TripSerializer, DaySerializer, DestinationSerializer, StopSerializer
+from .models import Category, Trip, Day, Destination, Stop
+from .serializers import CategorySerializer, TripSerializer, DaySerializer, DestinationSerializer, StopSerializer
 
 
 class IsOwner(permissions.BasePermission):
@@ -45,3 +45,17 @@ class DestinationViewSet(viewsets.ModelViewSet):
     serializer_class = DestinationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+# Category viewset for filtering destinations by category in the frontend
+#  all users can see categories and filter by them, so no need to restrict by user but no create/update/delete
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all() 
+    serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAuthenticated()]  # Allow anyone to view categories, but restrict create/update/delete to admins
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [permissions.IsAdminUser()]
+        return [permissions.IsAuthenticated()]
+    
+    def get_queryset(self):
+        return Category.objects.all()
