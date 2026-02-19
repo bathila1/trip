@@ -63,7 +63,8 @@ from datetime import timedelta
 SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,   # issue a new refresh token each time
     "BLACKLIST_AFTER_ROTATION": True, # old refresh tokens become invalid
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
+    # "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=7),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
 }
 
@@ -132,7 +133,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "Asia/Colombo"
 
 USE_I18N = True
 

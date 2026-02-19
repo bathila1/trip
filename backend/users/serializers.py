@@ -21,4 +21,4 @@ class FavouriteDestinationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FavouriteDestination
-        fields = ["id", "destination", "destination_name", "added_at"]
+        fields = "__all__"

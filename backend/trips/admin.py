@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, ThingToDo, Trip, Day, Destination, Stop
+from .models import Category, FeaturedDestination, ThingToDo, Trip, Day, Destination, Stop
 
 @admin.register(Trip)
 class TripAdmin(admin.ModelAdmin):
@@ -30,3 +30,8 @@ class CategoryAdmin(admin.ModelAdmin):
 class ThingToDoAdmin(admin.ModelAdmin):
     list_display = ["topic"]
     search_fields = ["topic"]
+
+@admin.register(FeaturedDestination)
+class FeaturedDestinationAdmin(admin.ModelAdmin):
+    list_display = ["destination_id", "start_date", "end_date"]
+    list_filter = ["start_date", "end_date"]

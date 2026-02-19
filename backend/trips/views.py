@@ -1,7 +1,9 @@
+from django.utils import timezone
 from rest_framework import viewsets, permissions
-from .models import Category, Trip, Day, Destination, Stop
-from .serializers import CategorySerializer, TripSerializer, DaySerializer, DestinationSerializer, StopSerializer
-
+from .models import Category, FeaturedDestination, Trip, Day, Destination, Stop
+from .serializers import CategorySerializer, FeaturedDestinationSerializer, TripSerializer, DaySerializer, DestinationSerializer, StopSerializer
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 class IsOwner(permissions.BasePermission):
     """
@@ -59,3 +61,22 @@ class CategoryViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         return Category.objects.all()
+
+# when hits the endpoint i wanna return only the featured destination for the current date, so in get_queryset i can filter by start_date and end_date to return only the featured destination for the current date
+# check if the current date is between start_date and end_date of the featured destination and return that destination
+# i want /featured-destination not /featured-destination/1 or 2 ... because there will be only one featured destination for the current date
+class FeaturedDestinationViewSet(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        today = timezone.now().date() # today's date - 2026-02-19
+        instance = FeaturedDestination.objects.filter(
+            start_date__lte=today,
+            end_date__gte=today
+        ).first()
+
+        if not instance:
+            return Response({"detail": "No featured destination today."}, status=404)
+
+        serializer = FeaturedDestinationSerializer(instance)
+        return Response(serializer.data)

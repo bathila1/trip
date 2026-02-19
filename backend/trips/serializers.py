@@ -1,9 +1,15 @@
 from rest_framework import serializers
-from .models import Category, ThingToDo, Trip, Day, Destination, Stop
+from .models import Category, FeaturedDestination, ThingToDo, Trip, Day, Destination, Stop
 
 class DestinationSerializer(serializers.ModelSerializer):
     #  show thingstodo foreign key in destination serializer
     things_to_do = serializers.SerializerMethodField()
+    # i wanna show extra field called location = {"latitude": obj.latitude, "longitude": obj.longitude}
+    location = serializers.SerializerMethodField()
+
+    def get_location(self, obj):
+        return {"latitude": obj.latitude, "longitude": obj.longitude}
+
     class Meta:
         model = Destination
         fields = "__all__"
@@ -85,3 +91,8 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = "__all__"
 
+class FeaturedDestinationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = FeaturedDestination
+        fields = "__all__"

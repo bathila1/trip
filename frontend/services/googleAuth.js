@@ -9,16 +9,14 @@ const projectId = Constants.expoConfig?.extra?.eas?.projectId;
 
 // put your real client ids here or env
 const ANDROID =
-  "127516239222-u0ovpru2q91d814g5ms2omhcpbl3tc2a.apps.googleusercontent.com";
+  "com.bathila.tripapp:/oauthredirect";
 const IOS =
   "127516239222-u0ovpru2q91d814g5ms2omhcpbl3tc2a.apps.googleusercontent.com";
 const WEB =
   "127516239222-u0ovpru2q91d814g5ms2omhcpbl3tc2a.apps.googleusercontent.com";
 
 const redirectUri = AuthSession.makeRedirectUri({
-  useProxy: true,
-  //to solve  [Error: Cannot use the AuthSession proxy because the project full name is not defined. Prefer AuthRequest in combination with an Expo Development Client build of your application. To continue using the AuthSession proxy, specify the project full name (@owner/slug) using the projectNameForProxy option.]
-  projectNameForProxy: "@bathila/trip-app",
+  scheme: "com.bathila.tripapp", // matches your Android package
 });
 
 console.log("Redirect URI:", redirectUri);
@@ -45,7 +43,7 @@ export const useGoogleAuth = () => {
     return (
       response?.authentication?.idToken ||
       response?.authentication?.accessToken ||
-      null
+      null  
     );
   };
 

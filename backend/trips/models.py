@@ -150,3 +150,18 @@ class Stop(models.Model):
 
     def __str__(self):
         return f"{self.destination.name} ({self.day})"
+
+
+# i wanna a send a featured destination id in trip serializer to show in frontend as featured destination of the day
+# for specific period this featured destination will be same for all users and after that it will change to another destination for specific period and so on. so i can create a model called FeaturedDestination with fields destination_id, start_date, end_date
+class FeaturedDestination(models.Model):
+# destinationid
+    destination_id = models.ForeignKey(
+        Destination,
+        on_delete=models.CASCADE
+    )
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    def __str__(self):
+        return f"{self.destination_id.name} (Featured from {self.start_date} to {self.end_date})"

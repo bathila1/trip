@@ -4,6 +4,7 @@
     "owner": "bathila",
     "slug": "trip-app",
     "version": "1.0.0",
+    "scheme": "com.bathila.tripapp", 
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
 
