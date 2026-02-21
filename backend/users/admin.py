@@ -41,7 +41,6 @@ class UserProfileAdmin(admin.ModelAdmin):
 class FavoriteDestinationAdmin(admin.ModelAdmin):
     list_display = ["user", "destination"]
     list_filter = ["user"]
-    search_fields = ["user__username", "destination__name"]
 
 # avatar suggestion model and admin
 from .models import AvatarSuggestion

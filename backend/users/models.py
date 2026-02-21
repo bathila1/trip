@@ -5,16 +5,23 @@ from django.conf import settings
 from trips.models import Destination   # import your existing Destination model
 
 class FavouriteDestination(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="favourites")
-    destination = models.ForeignKey(Destination, on_delete=models.CASCADE, related_name="favourited_by")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="favourites"
+    )
+    destination = models.ForeignKey(
+        Destination,
+        on_delete=models.CASCADE,
+        related_name="favourited_by"
+    )
     added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ("user", "destination")  # prevent duplicates
 
     def __str__(self):
-        return f"{self.user.email} → {self.destination.name}"
-
+        return f"{self.user.email} - {self.destination.id}"
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")

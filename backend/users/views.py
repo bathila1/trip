@@ -1,4 +1,5 @@
 # Create your views here.
+from trips.models import Destination
 from decouple import config
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
@@ -29,6 +30,7 @@ import json
 
 from .models import FavouriteDestination
 from .serializers import FavouriteDestinationSerializer
+from django.shortcuts import get_object_or_404
 
 @api_view(["GET", "POST", "DELETE"])
 @permission_classes([IsAuthenticated])
@@ -41,20 +43,35 @@ def favourite_destinations(request):
     elif request.method == "POST":
         destination_id = request.data.get("destination_id")
         if not destination_id:
-            return Response({"error": "destination_id required"}, status=400)
+            return Response({"error": "destination_id required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        fav, created = FavouriteDestination.objects.get_or_create(
+        destination = get_object_or_404(Destination, pk=destination_id)
+
+        # Check if already exists
+        if FavouriteDestination.objects.filter(user=request.user, destination=destination).exists():
+            return Response(
+                {"error": "Destination already favourited"},
+                status=status.HTTP_409_CONFLICT
+            )
+
+        fav = FavouriteDestination.objects.create(
             user=request.user,
-            destination_id=destination_id
+            destination=destination
         )
         serializer = FavouriteDestinationSerializer(fav)
-        return Response(serializer.data, status=201 if created else 200)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
     elif request.method == "DELETE":
         destination_id = request.data.get("destination_id")
-        FavouriteDestination.objects.filter(user=request.user, destination_id=destination_id).delete()
-        return Response({"message": "Removed from favourites"}, status=200)
+        if not destination_id:
+            return Response({"error": "destination_id required"}, status=400)
 
+        FavouriteDestination.objects.filter(
+            user=request.user,
+            destination_id=destination_id
+        ).delete()
+        return Response({"message": "Removed from favourites"}, status=200)
 @csrf_exempt
 def google_login(request):
     if request.method == "POST":

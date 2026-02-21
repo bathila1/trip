@@ -15,10 +15,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-
 class FavouriteDestinationSerializer(serializers.ModelSerializer):
-    destination_name = serializers.CharField(source="destination.name", read_only=True)
+    destination_id = serializers.IntegerField(source="destination.id", read_only=True)
 
     class Meta:
         model = FavouriteDestination
-        fields = "__all__"
+        fields = ["destination_id"]
