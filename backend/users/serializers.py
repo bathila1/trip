@@ -4,15 +4,14 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import FavouriteDestination, UserProfile
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    email = serializers.CharField(source="user.username")
-    full_name = serializers.CharField(source="user.profile.full_name")
-
+    email = serializers.CharField(source="user.username", read_only=True)  # show email, but not writable
 
     class Meta:
         model = UserProfile
-        
-        #all fields with **
-        fields = "__all__"
+        fields = ["email", "full_name", "phone", "bio", "profile_picture"]
+        read_only_fields = ["email"]
+
+
 
 
 class FavouriteDestinationSerializer(serializers.ModelSerializer):

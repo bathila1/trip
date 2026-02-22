@@ -160,6 +160,7 @@ class FeaturedDestination(models.Model):
         Destination,
         on_delete=models.CASCADE
     )
+    image_url = models.URLField(blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
 
