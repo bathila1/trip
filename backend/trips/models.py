@@ -90,7 +90,7 @@ class Day(models.Model):
 # for catogory filter
 class Category(models.Model):
     name = models.CharField(max_length=255)
-    icon_url = models.URLField(blank=True)
+    icon_url = models.CharField(max_length=255, blank=True)
 
     def __str__(self):
         return self.name
